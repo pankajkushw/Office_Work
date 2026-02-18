@@ -46,6 +46,26 @@ def pasteRange(startCol, startRow, endCol, endRow, sheetReceiving,copiedData):
         countRow += 1
 
 ##########################################################################################################
+def Swap_A2_for_progress():
+    print("Swaping Current Data to Old for progress...")
+    
+    wb = openpyxl.load_workbook(report_file) 
+    New_sheet = wb['2024-26 A2']
+    old_sheet = wb['2024-26 A2_old']
+    copiedData=copyRange(3, 2, 15, 484, New_sheet)
+    pasteRange(3, 2, 15, 484, old_sheet, copiedData)
+
+def Swap_A4_for_progress():
+    print("Swaping Current A4 Data to Old for progress...")
+    
+    wb = openpyxl.load_workbook(report_file) 
+    New_sheet = wb['NewA4Report_2426']
+    old_sheet = wb['OldA4Report_2426']
+    copiedData=copyRange(3, 3, 29, 485, New_sheet)
+    pasteRange(3, 3, 29, 485, old_sheet, copiedData)
+
+
+##########################################################################################################
 def CopyA2_2425_Data():
     xlfiles = glob.glob(RAW_FILE+ "Phy*2024*.xlsx")
     print(xlfiles)
@@ -373,32 +393,30 @@ def CopyA4_1625_Data():
 # excution starts here
 ##########################################################################################################
 dir_path = os.path.dirname(os.path.realpath(__file__))
-report_file = dir_path + "/PMAYG-Meeting_02022026_To_09022026_exceLTL.xlsx"
+report_file = dir_path + "/PMAYG_TA-AM_WISE_REPORT_07012026_13022026_COLL_M.xlsx"
 RAW_FILE = dir_path+ "/portalData/"
 print(RAW_FILE)
 file_list = glob.glob(RAW_FILE + "*.xls")
 
 # Converting xls file into xlsx
-for f in file_list:
-    print(f)
-    data = pd.read_html(f)
-    data[0].to_excel(f.replace(".xls", ".xlsx"), index=False)
-    #os.remove(f)
+# for f in file_list:
+#     print(f)
+#     data = pd.read_html(f)
+#     data[0].to_excel(f.replace(".xls", ".xlsx"), index=False)
+#     #os.remove(f)
 
 ## 24-25 Files
 #swap_2425
-CopyA2_2425_Data()
-CopyA4_2526_Data()
+Swap_A2_for_progress()
+#CopyA2_2425_Data()
+#CopyA2_2526_Data()
 
-CopyA2_2425_Data()
-CopyA4_2526_Data()
+Swap_A4_for_progress()
+#CopyA4_2425_Data()
+#CopyA4_2526_Data()
 
 
-## 16-25 Files
-CopyA4_1625_Data_old()
-CopyA4_1625_Data()
 
-CopyA2_1625_Data()
 
 
 
