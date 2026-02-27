@@ -392,9 +392,12 @@ def CopyA4_1625_Data():
 
 # excution starts here
 ##########################################################################################################
-dir_path = os.path.dirname(os.path.realpath(__file__))
-report_file = dir_path + "/PMAYG_TA-AM_WISE_REPORT_07012026_13022026_COLL_M.xlsx"
-RAW_FILE = dir_path+ "/portalData/"
+#dir_path = os.path.dirname(os.path.realpath(__file__))
+dir_path ="L:\Office\000Reports\00000Feb20206\AutoCopyReportData"
+print(dir_path)
+report_file = dir_path + "\\PMAYG_TA-AM_WISE_REPORT_07012026_13022026_COLL_M.xlsx"
+print(report_file)
+RAW_FILE = dir_path+ "\\portalData\\"
 print(RAW_FILE)
 file_list = glob.glob(RAW_FILE + "*.xls")
 
