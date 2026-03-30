@@ -66,16 +66,16 @@ for fy in FY_type:
                 button = driver.find_element(By.ID, "ctl00_ContentPlaceHolder1_btnExport") 
                 button.click()
                 #download block data for
-                for block in block_type:
-                    dropdown = Select(driver.find_element(By.ID, "ctl00_ContentPlaceHolder1_ddlBlock"))
-                    dropdown.select_by_visible_text(block)
-                    print(block)
-                    print("Solving Captcha...")
-                    print( solveCaptcha())
-                    button = driver.find_element(By.ID, "ctl00_ContentPlaceHolder1_btnSubmit")
-                    button.click()
-                    button = driver.find_element(By.ID, "ctl00_ContentPlaceHolder1_btnExport") 
-                    button.click()
+                # for block in block_type:
+                #     dropdown = Select(driver.find_element(By.ID, "ctl00_ContentPlaceHolder1_ddlBlock"))
+                #     dropdown.select_by_visible_text(block)
+                #     print(block)
+                #     print("Solving Captcha...")
+                #     print( solveCaptcha())
+                #     button = driver.find_element(By.ID, "ctl00_ContentPlaceHolder1_btnSubmit")
+                #     button.click()
+                #     button = driver.find_element(By.ID, "ctl00_ContentPlaceHolder1_btnExport") 
+                #     button.click()
 
                 mySleepFunction(10) #Wait for captcha to be solved
                 print("Data Downloaded for " + fy + " " + scheme + " " + state + " " + district)
