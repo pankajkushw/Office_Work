@@ -14,7 +14,7 @@ block_type = ["BHAIYATHAN", "ODAGI", "PRATAPPUR", "PREMNAGAR", "RAMANUJNAGAR", "
 
 driver = webdriver.Chrome()
 driver.get("https://report.pmayg.dord.gov.in//netiay/EFMSReport/FTOInstallmentWiseReport.aspx")
-
+WAIT_SECONDS = 3
 def mySleepFunction(seconds):
     for i in range(seconds):
         print(f"Waiting... {seconds - i} seconds remaining", end="\r")
@@ -22,8 +22,8 @@ def mySleepFunction(seconds):
 
 def solveCaptcha():
     captcha_image = driver.find_element(By.ID, "ctl00_ContentPlaceHolder1_imgCaptcha")
-    captcha_image.screenshot("captcha.png")
-    captcha_text = pytesseract.image_to_string(Image.open("captcha.png"))
+    captcha_image.screenshot("captcha.png")    
+    captcha_text = pytesseract.image_to_string("captcha.png", config='--psm 7 --oem 3 -c tessedit_char_whitelist=0123456789+-*/()')
     print("Captcha Text:", captcha_text)
     result = eval(captcha_text)
     print("Captcha Result:", result)
@@ -39,14 +39,25 @@ for reporting in Reporting_type:
     dropdown.select_by_visible_text(reporting)
     print(reporting)    
     if(reporting == "PMAYG Cumulative Progress"): # skip fin year and scehme
-        dropdown = Select(driver.find_element(By.ID, "ctl00_ContentPlaceHolder1_ddlState"))
-        dropdown.select_by_visible_text("CHHATTISGARH")
-        print("CHHATTISGARH")
-        print(solveCaptcha())
-        button = driver.find_element(By.ID, "ctl00_ContentPlaceHolder1_btnSubmit")
-        button.click()
-        button = driver.find_element(By.ID, "ctl00_ContentPlaceHolder1_btnExport")
-        button.click()
+        for state in State_type:
+            dropdown = Select(driver.find_element(By.ID, "ctl00_ContentPlaceHolder1_ddlState"))
+            dropdown.select_by_visible_text(state)
+            print(solveCaptcha())
+            button = driver.find_element(By.ID, "ctl00_ContentPlaceHolder1_btnSubmit")
+            button.click()
+            button = driver.find_element(By.ID, "ctl00_ContentPlaceHolder1_btnExport")  
+            button.click()
+            for district in District_type: 
+                dropdown = Select(driver.find_element(By.ID, "ctl00_ContentPlaceHolder1_ddlDistrict"))
+                dropdown.select_by_visible_text(district)
+                print(district)
+                print("Solving Captcha...")
+                print( solveCaptcha())
+                button = driver.find_element(By.ID, "ctl00_ContentPlaceHolder1_btnSubmit")
+                button.click()
+                button = driver.find_element(By.ID, "ctl00_ContentPlaceHolder1_btnExport") 
+                button.click()
+                mySleepFunction(WAIT_SECONDS2) #Wait for captcha to be solved
     else:
         for fy in FY_type:
             dropdown = Select(driver.find_element(By.ID, "ctl00_ContentPlaceHolder1_ddlFinYear"))
@@ -80,7 +91,7 @@ for reporting in Reporting_type:
                         button = driver.find_element(By.ID, "ctl00_ContentPlaceHolder1_btnExport") 
                         button.click()
 
-                        mySleepFunction(10) #Wait for captcha to be solved
+                        mySleepFunction(WAIT_SECONDS) #Wait for captcha to be solved
                         print("Data Downloaded for " + fy + " " + scheme + " " + state + " " + district)
 
 driver.quit()

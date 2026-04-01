@@ -27,14 +27,7 @@ def mySleepFunction(seconds):
 def solveCaptcha():
 
     captcha_image = driver.find_element(By.ID, "ctl00_ContentPlaceHolder1_imgCaptcha")
-    captcha_image.screenshot("captcha.png")
-
-    # image = cv2.imread("captcha.png")
-    # gray = cv2.imread(image, cv2.COLOR_BGR2GRAY)
-    # thresh = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)[1]
-    # custom_config = r'--oem 3 --psm 7'
-
-    
+    captcha_image.screenshot("captcha.png")    
     captcha_text = pytesseract.image_to_string("captcha.png", config='--psm 7 --oem 3 -c tessedit_char_whitelist=0123456789+-*/()')
     mySleepFunction(2) #Wait for captcha to be solved
     print("Captcha Text:", captcha_text)
