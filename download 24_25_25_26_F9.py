@@ -57,7 +57,7 @@ for reporting in Reporting_type:
                 button.click()
                 button = driver.find_element(By.ID, "ctl00_ContentPlaceHolder1_btnExport") 
                 button.click()
-                mySleepFunction(WAIT_SECONDS2) #Wait for captcha to be solved
+                mySleepFunction(WAIT_SECONDS) #Wait for captcha to be solved
     else:
         for fy in FY_type:
             dropdown = Select(driver.find_element(By.ID, "ctl00_ContentPlaceHolder1_ddlFinYear"))
