@@ -7,7 +7,7 @@ from PIL import Image
 import pytesseract
 import cv2
 
-FY_type = ["PMAYG Cumulative progress", "2024-2025", "2025-2026"]
+FY_type = ["PMAYG Cumulative progress till date", "2024-2025", "2025-2026"]
 Scheme_type = ["PRADHAN MANTRI AWAAS YOJANA GRAMIN"]
 State_type = ["CHHATTISGARH"]
 District_type = ["SURAJPUR"]
@@ -17,12 +17,11 @@ driver = webdriver.Chrome()
 driver.get("https://dashboard.pmayg.dord.gov.in/netiay/masterlogin.aspx")
 os.environ["OMP_THREAD_LIMIT"] = "1"
 
-WAIT_SECONDS = 10
+WAIT_SECONDS = 3
 USER_ID = "CH26"
-PASSWORD = "Dspr@202620"
+PASSWORD = "Dist@2026"
 FY = "2025-2026"    
 
-driver.implicitly_wait(10) 
 def mySleepFunction(seconds):
     for i in range(seconds):
         print(f"Waiting... {seconds - i} seconds remaining", end="\r")
@@ -31,15 +30,14 @@ def mySleepFunction(seconds):
 def solveLoginCaptcha():
     captcha_image = driver.find_element(By.ID, "ctl00_ContentPlaceHolder1_imgCaptcha")
     captcha_image.screenshot("captcha.png")    
-    captcha_text = pytesseract.image_to_string("captcha.png", config='--psm 6, lang='eng')
+    captcha_text = pytesseract.image_to_string("captcha.png", config='--psm 6', lang='eng')
     print("Captcha Text:", captcha_text.strip())
 
-    print("Captcha Text:", captcha_text.strip())
     captcha_input = driver.find_element(By.ID, "ctl00_ContentPlaceHolder1_txtCaptcha")
     # check if captcha_text is empty or not
-    mySleepFunction(10)
-    captcha_input.send_keys(captcha_text.strip())
-    return captcha_text.strip()    
+    captcha_input.send_keys(str(captcha_text))
+    input("Press Enter after solving captcha and logging in...")  # Wait for user to solve captcha and log in
+    return captcha_text    
 
 def login():
     dropdown = Select(driver.find_element(By.ID, "ctl00_ContentPlaceHolder1_ddlFinYear"))
@@ -51,9 +49,15 @@ def login():
     password.send_keys(PASSWORD)
     print("Solving Captcha...")
     print( solveLoginCaptcha())
-    button = driver.find_element(By.ID, "ctl00_ContentPlaceHolder1_btnSubmit")
-    button.click()
+    
+    #button = driver.find_element(By.ID, "ctl00_ContentPlaceHolder1_btnSubmit")
+    #button.click()
     print("Logged in successfully!")
+    alert = driver.find_element(By.NAME, "btnClose")
+    if alert:
+        alert.click()
+        print("Alert closed.")
+
 
     #calling to download A2 Report1649	1540	1330
     A2_Report()
@@ -65,7 +69,6 @@ def A2_Report():
     # Selcting A2 Report
     try: 
         link = driver.find_element(By.PARTIAL_LINK_TEXT, "High level physical progress report")
-        
         link.click()
     except Exception as e:
         print("Error while navigating to A2 Report:", e)
