@@ -17,11 +17,11 @@ driver = webdriver.Chrome()
 driver.get("https://dashboard.pmayg.dord.gov.in/netiay/masterlogin.aspx")
 os.environ["OMP_THREAD_LIMIT"] = "1"
 
-WAIT_SECONDS = 3
+WAIT_SECONDS = 2
 USER_ID = "CH26"
 PASSWORD = "Dist@2026"
 FY = "2025-2026"    
-
+driver.implicitly_wait(10) 
 def mySleepFunction(seconds):
     for i in range(seconds):
         print(f"Waiting... {seconds - i} seconds remaining", end="\r")
@@ -62,10 +62,6 @@ def login():
 
     #calling to download A2 Report1649	1540	1330
     A2_Report()
-    Aawas+_Report()
-Aawas+_Report():
-
-
 
 def A2_Report():
     print("Navigating to A2 Report...")
@@ -112,20 +108,20 @@ def A2_Report():
                     button.click()
                     button = driver.find_element(By.ID, "ctl00_ContentPlaceHolder1_btnExport") 
                     button.click()
+                    mySleepFunction(WAIT_SECONDS)
                     
                     #download block data for
-                    # for block in block_type:
-                    #     dropdown = Select(driver.find_element(By.ID, "ctl00_ContentPlaceHolder1_ddlBlock"))
-                    #     dropdown.select_by_visible_text(block)
-                    #     print(block)
-                    #     button = driver.find_element(By.ID, "ctl00_ContentPlaceHolder1_btnSubmit")
-                    #     button.click()
-                    #     mySleepFunction(WAIT_SECONDS)
-                    #     button = driver.find_element(By.ID, "ctl00_ContentPlaceHolder1_btnExport") 
-                    #     button.click()
-                    # print("Data Downloaded for " + fy + " " + scheme + " " + state + " " + district)
-home = driver.find_element(By.PARTIAL_LINK_TEXT, "Home")
-home.click()
+                    for block in block_type:
+                        dropdown = Select(driver.find_element(By.ID, "ctl00_ContentPlaceHolder1_ddlBlock"))
+                        dropdown.select_by_visible_text(block)
+                        print(block)
+                        button = driver.find_element(By.ID, "ctl00_ContentPlaceHolder1_btnSubmit")
+                        button.click()
+                        mySleepFunction(WAIT_SECONDS)
+                        button = driver.find_element(By.ID, "ctl00_ContentPlaceHolder1_btnExport") 
+                        button.click()
+                        mySleepFunction(WAIT_SECONDS)
+                    print("Data Downloaded for " + fy + " " + scheme + " " + state + " " + district)
 
 # Login to the website
 login()
