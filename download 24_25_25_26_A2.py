@@ -44,8 +44,9 @@ def login():
     dropdown.select_by_visible_text(FY)
 
     username = driver.find_element(By.ID, "ctl00_ContentPlaceHolder1_txtUserName")
-    password = driver.find_element(By.ID, "ctl00_ContentPlaceHolder1_txtPassword")
     username.send_keys(USER_ID)
+
+    password = driver.find_element(By.ID, "ctl00_ContentPlaceHolder1_txtPassword")
     password.send_keys(PASSWORD)
     print("Solving Captcha...")
     print( solveLoginCaptcha())
@@ -82,10 +83,12 @@ def A2_Report():
         dropdown = Select(driver.find_element(By.ID, "ctl00_ContentPlaceHolder1_ddlFinYear"))
         dropdown.select_by_visible_text(fy)
         print(fy)
+        
         for scheme in Scheme_type:
             dropdown = Select(driver.find_element(By.ID, "ctl00_ContentPlaceHolder1_ddlScheme"))
             dropdown.select_by_visible_text(scheme)
             print(scheme)
+            
             for state in State_type:
                 dropdown = Select(driver.find_element(By.ID, "ctl00_ContentPlaceHolder1_ddlState"))
                 dropdown.select_by_visible_text(state)
@@ -94,13 +97,14 @@ def A2_Report():
                     #Get State Data
                     button = driver.find_element(By.ID, "ctl00_ContentPlaceHolder1_btnSubmit")
                     button.click()
-                    
+                    mySleepFunction(WAIT_SECONDS)
                     button = driver.find_element(By.ID, "ctl00_ContentPlaceHolder1_btnExport")
                     button.click()
                 for district in District_type: 
                     dropdown = Select(driver.find_element(By.ID, "ctl00_ContentPlaceHolder1_ddlDistrict"))
                     dropdown.select_by_visible_text(district)
                     print(district)
+
                     button = driver.find_element(By.ID, "ctl00_ContentPlaceHolder1_btnSubmit")
                     button.click()
                     button = driver.find_element(By.ID, "ctl00_ContentPlaceHolder1_btnExport") 
@@ -113,6 +117,7 @@ def A2_Report():
                         print(block)
                         button = driver.find_element(By.ID, "ctl00_ContentPlaceHolder1_btnSubmit")
                         button.click()
+                        mySleepFunction(WAIT_SECONDS)
                         button = driver.find_element(By.ID, "ctl00_ContentPlaceHolder1_btnExport") 
                         button.click()
                     print("Data Downloaded for " + fy + " " + scheme + " " + state + " " + district)
