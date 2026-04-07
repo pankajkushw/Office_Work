@@ -62,6 +62,9 @@ def login():
 
     #calling to download A2 Report1649	1540	1330
     A2_Report()
+    Aawas+_Report()
+Aawas+_Report():
+
 
 
 def A2_Report():
@@ -111,16 +114,18 @@ def A2_Report():
                     button.click()
                     
                     #download block data for
-                    for block in block_type:
-                        dropdown = Select(driver.find_element(By.ID, "ctl00_ContentPlaceHolder1_ddlBlock"))
-                        dropdown.select_by_visible_text(block)
-                        print(block)
-                        button = driver.find_element(By.ID, "ctl00_ContentPlaceHolder1_btnSubmit")
-                        button.click()
-                        mySleepFunction(WAIT_SECONDS)
-                        button = driver.find_element(By.ID, "ctl00_ContentPlaceHolder1_btnExport") 
-                        button.click()
-                    print("Data Downloaded for " + fy + " " + scheme + " " + state + " " + district)
+                    # for block in block_type:
+                    #     dropdown = Select(driver.find_element(By.ID, "ctl00_ContentPlaceHolder1_ddlBlock"))
+                    #     dropdown.select_by_visible_text(block)
+                    #     print(block)
+                    #     button = driver.find_element(By.ID, "ctl00_ContentPlaceHolder1_btnSubmit")
+                    #     button.click()
+                    #     mySleepFunction(WAIT_SECONDS)
+                    #     button = driver.find_element(By.ID, "ctl00_ContentPlaceHolder1_btnExport") 
+                    #     button.click()
+                    # print("Data Downloaded for " + fy + " " + scheme + " " + state + " " + district)
+home = driver.find_element(By.PARTIAL_LINK_TEXT, "Home")
+home.click()
 
 # Login to the website
 login()
