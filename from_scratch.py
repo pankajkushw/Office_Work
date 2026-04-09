@@ -41,7 +41,7 @@ def pasteRange(startCol, startRow, endCol, endRow, sheetReceiving,copiedData):
         countCol = 0
         for j in range(startCol,endCol+1,1):
             sheetReceiving.cell(row=i, column=j).value = copiedData[countRow][countCol]
-            print(f"Pasting data at Row: {i}, Column: {j} with value: " + str(sheetReceiving.cell(row=i, column=j).value))
+            #print(f"Pasting data at Row: {i}, Column: {j} with value: " + str(sheetReceiving.cell(row=i, column=j).value))
             #rangeSelected[i][j] = copiedData[countRow][countCol]
             countCol += 1
         countRow += 1
