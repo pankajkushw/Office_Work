@@ -40,27 +40,31 @@ def pasteRange(startCol, startRow, endCol, endRow, sheetReceiving,copiedData):
     for i in range(startRow,endRow+1,1):
         countCol = 0
         for j in range(startCol,endCol+1,1):
-
-            sheetReceiving.cell(row = i, column = j).value = copiedData[countRow][countCol]
+            sheetReceiving.cell(row=i, column=j).value = copiedData[countRow][countCol]
+            print(f"Pasting data at Row: {i}, Column: {j} with value: " + str(sheetReceiving.cell(row=i, column=j).value))
+            #rangeSelected[i][j] = copiedData[countRow][countCol]
             countCol += 1
         countRow += 1
 
 ##########################################################################################################
 def Swap_A2_for_progress():
     print("Swaping Current Data to Old for progress...")
-    
-    wb = openpyxl.load_workbook(report_file) 
+    wb = openpyxl.load_workbook(report_file, data_only=True) 
     New_sheet = wb['2024-26 A2']
     old_sheet = wb['2024-26 A2_old']
+    #copyRange(startCol, startRow, endCol, endRow, sheet)
     copiedData=copyRange(3, 2, 15, 484, New_sheet)
+    #pasteRange(startCol, startRow, endCol, endRow, sheetReceiving,copiedData):
     pasteRange(3, 2, 15, 484, old_sheet, copiedData)
+    wb.save(report_file)
+    print("Swaping A2 File completed.")
 
 def Swap_A4_for_progress():
     print("Swaping Current A4 Data to Old for progress...")
-    
-    wb = openpyxl.load_workbook(report_file) 
+    wb = openpyxl.load_workbook(report_file, data_only=True) 
     New_sheet = wb['NewA4Report_2426']
     old_sheet = wb['OldA4Report_2426']
+    #copyRange(startCol, startRow, endCol, endRow, sheet)
     copiedData=copyRange(3, 3, 29, 485, New_sheet)
     pasteRange(3, 3, 29, 485, old_sheet, copiedData)
 
@@ -73,7 +77,7 @@ def CopyA2_2425_Data():
     #File to be copied
     print("starting A2 Copy")
     #File to be pasted into
-    template = openpyxl.load_workbook(report_file) 
+    template = openpyxl.load_workbook(report_file, data_only=True)
     # Copying A2 Files 2024-25
     temp_sheet = template["2024-24 A2"] 
     for files_list in xlfiles:
@@ -219,6 +223,7 @@ def CopyA2_2425_Data_old():
     pasteRange(3, 2, 15, 484, a2_old,copied_data)
     print("Swaping A2 File completed.")
     openpyxl.writer.excel.save_workbook(template, report_file)
+    template.save()
     template.close()
 
 
@@ -392,11 +397,17 @@ def CopyA4_1625_Data():
 
 # excution starts here
 ##########################################################################################################
-dir_path = os.path.dirname(os.path.realpath(__file__))
-report_file = dir_path + "/PMAYG_TA-AM_WISE_REPORT_07012026_13022026_COLL_M.xlsx"
-RAW_FILE = dir_path+ "/portalData/"
-print(RAW_FILE)
-file_list = glob.glob(RAW_FILE + "*.xls")
+#dir_path = os.path.dirname(os.path.realpath(__file__))
+
+base_path = Path("D:\\Office\\000Reports\\0000April 2026\\07042026")
+report_file = base_path.joinpath("PMAYG_TA-AM_WISE_REPORT_06022026_03042026_COLL_M.xlsm")
+RAW_FILE = base_path.joinpath("portalData\\")
+print(base_path)
+print("raw" + str(RAW_FILE))
+print(report_file)
+
+ 
+file_list_xlsx = list(Path(RAW_FILE).glob("*.xls"))
 
 # Converting xls file into xlsx
 # for f in file_list:
@@ -411,7 +422,7 @@ Swap_A2_for_progress()
 #CopyA2_2425_Data()
 #CopyA2_2526_Data()
 
-Swap_A4_for_progress()
+#Swap_A4_for_progress()
 #CopyA4_2425_Data()
 #CopyA4_2526_Data()
 
