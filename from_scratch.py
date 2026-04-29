@@ -139,6 +139,74 @@ def CopyA2_2425_Data():
         print("All files copied and pasted successfully")
 
 ##########################################################################################################
+def CopyA2_2526_Data():
+    xlfiles = list(RAW_FILE.glob("PhysicalProgressReport*3305*2025-2026*.xlsx"))
+    if len(xlfiles) == 0:
+        print("No files found in the directory: " + str(RAW_FILE))
+    else:
+        for x in xlfiles:
+            print(x)
+    
+        #File to be copied
+        print("starting A2 Copy")
+        #File to be pasted into
+        template = openpyxl.load_workbook(report_file, data_only=True)
+        # Copying A2 Files 2024-25
+        temp_sheet = template["2025-26 A2"] 
+        
+        for files_list in xlfiles:
+            wb = openpyxl.load_workbook(files_list, read_only=True) 
+            sheet = wb['Sheet1']
+            
+            #copyRange(startCol, startRow, endCol, endRow, sheet)
+            #pasteRange(startCol, startRow, endCol, endRow, sheetReceiving,copiedData)
+            files = Path(files_list).name
+            print("Copying: "+ files +" in main excel file")
+            match files:
+                #Bhaiyathan 24-25
+                case "PhysicalProgressReport_PMAYG_3305012_2025-2026.xlsx":
+                    print("Copying Bhaiyathan 25-26")
+                    copiedData=copyRange(1, 3, 13, 80, sheet)
+                    pasteRange(45, 2, 57, 79, temp_sheet,copiedData)
+
+                #Odgi 24-25
+                case "PhysicalProgressReport_PMAYG_3305013_2025-2026.xlsx":
+                    print("Copying Odgi 25-26")
+                    copiedData=copyRange(1, 3, 13, 76, sheet)
+                    pasteRange(45, 80, 57, 153, temp_sheet,copiedData)
+                    
+                #Pratappur 24-25
+                case "PhysicalProgressReport_PMAYG_3305015_2025-2026.xlsx":
+                    print("Copying Pratappur 25-26")
+                    copiedData=copyRange(1, 3, 13, 104, sheet)
+                    pasteRange(45, 154, 57, 255, temp_sheet,copiedData)
+                    
+                #Premnagar 24-25
+                case "PhysicalProgressReport_PMAYG_3305010_2025-2026.xlsx":
+                    print("Copying Premnagar 25-26")
+                    copiedData=copyRange(1, 3, 13, 49, sheet)
+                    pasteRange(45, 256, 57, 302, temp_sheet,copiedData)
+                    
+                #Ramanujnagar 24-25
+                case "PhysicalProgressReport_PMAYG_3305011_2025-2026.xlsx":
+                    print("Copying Ramanujnagar 25-26")
+                    copiedData=copyRange(1, 3, 13, 76, sheet)
+                    pasteRange(45, 303, 57, 376, temp_sheet,copiedData)
+                    
+                #Surajpur 24-25
+                case "PhysicalProgressReport_PMAYG_3305009_2025-2026.xlsx":
+                    print("Copying Surajpur 25-26")
+                    copiedData=copyRange(1, 3, 13, 110, sheet)
+                    pasteRange(45, 377, 57, 484, temp_sheet,copiedData)
+                case _:
+                    print("file not matching with any case:" + files)
+            wb.close()  
+        print("A2 File saved")
+        template.save(report_file)
+        template.close()
+        print("All files copied and pasted successfully")
+
+##########################################################################################################
 def CopyA4_2425_Data():
     xlfiles = list(Path(RAW_FILE).glob("Gap*2024-2025*.xls"))
     print(xlfiles)
@@ -437,7 +505,7 @@ for f in file_list_xlsx:
 #swap_2425
 #Swap_A2_for_progress()
 CopyA2_2425_Data()
-#CopyA2_2526_Data()
+CopyA2_2526_Data()
 
 #Swap_A4_for_progress()
 #CopyA4_2425_Data()
