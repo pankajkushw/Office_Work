@@ -152,7 +152,7 @@ def CopyA2_2526_Data():
         #File to be pasted into
         template = openpyxl.load_workbook(report_file, data_only=True)
         # Copying A2 Files 2024-25
-        temp_sheet = template["2025-26 A2"] 
+        temp_sheet = template["2024-26 A2"] 
         
         for files_list in xlfiles:
             wb = openpyxl.load_workbook(files_list, read_only=True) 
@@ -504,7 +504,7 @@ for f in file_list_xlsx:
 ## 24-25 Files
 #swap_2425
 #Swap_A2_for_progress()
-CopyA2_2425_Data()
+#CopyA2_2425_Data()
 CopyA2_2526_Data()
 
 #Swap_A4_for_progress()
