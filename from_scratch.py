@@ -56,6 +56,7 @@ def Swap_A2_for_progress():
     #pasteRange(startCol, startRow, endCol, endRow, sheetReceiving,copiedData):
     pasteRange(3, 2, 15, 484, old_sheet, copiedData)
     wb.save(report_file)
+    wb.close()
     print("Swaping A2 File completed.")
 
 def Swap_A4_for_progress():
@@ -67,6 +68,7 @@ def Swap_A4_for_progress():
     copiedData=copyRange(3, 3, 29, 485, New_sheet)
     pasteRange(3, 3, 29, 485, old_sheet, copiedData)
     wb.save(report_file)
+    wb.close()
     print("Swaping A4 File completed.")
 
 
@@ -208,7 +210,7 @@ def CopyA2_2526_Data():
 
 ##########################################################################################################
 def CopyA4_2425_Data():
-    xlfiles = list(Path(RAW_FILE).glob("Gap*2024-2025*.xls"))
+    xlfiles = list(Path(RAW_FILE).glob("GapinprogressAccountverifctioncompletion*2024-2025*.xlsx"))
     print(xlfiles)
     #File to be copied
     print("starting A4 Copy")
@@ -217,7 +219,7 @@ def CopyA4_2425_Data():
  
     # Copying A4 Files 2024-25
     print("Opening A4 Sheet")
-    temp_sheet = template["NewA4Report_2425"] 
+    temp_sheet = template["NewA4Report_2426"] 
     for files_list in xlfiles:
         
         wb = openpyxl.load_workbook(files_list) 
@@ -231,38 +233,38 @@ def CopyA4_2425_Data():
             #Bhaiyathan 24-25
             case "GapinprogressAccountverifctioncompletion_PMAYG_3305012_2024-2025.xlsx":
                 print("Copying Bhaiyathan 24-25")
-                copiedData=copyRange(1, 3, 27, 81, sheet)
-                pasteRange(3, 3, 29, 80, temp_sheet,copiedData)
+                copiedData=copyRange(1, 3, 27, 80, sheet)
+                pasteRange(31, 3, 57, 80, temp_sheet,copiedData)
                                 
             #Odgi 24-25
             case "GapinprogressAccountverifctioncompletion_PMAYG_3305013_2024-2025.xlsx":
                 print("Copying Odgi 24-25")
-                copiedData=copyRange(1, 3, 27, 77, sheet)
-                pasteRange(3, 81, 29, 154, temp_sheet,copiedData)
+                copiedData=copyRange(1, 3, 27, 76, sheet)
+                pasteRange(31, 81, 57, 154, temp_sheet,copiedData)
                 
             #Pratappur 24-25
             case "GapinprogressAccountverifctioncompletion_PMAYG_3305015_2024-2025.xlsx":
                 print("Copying Pratappur 24-25")
-                copiedData=copyRange(1, 3, 27, 105, sheet)
-                pasteRange(3, 155, 29, 256, temp_sheet,copiedData)
+                copiedData=copyRange(1, 3, 27, 104, sheet)
+                pasteRange(31, 155, 57, 256, temp_sheet,copiedData)
                 
             #Premnagar 24-25
             case "GapinprogressAccountverifctioncompletion_PMAYG_3305010_2024-2025.xlsx":
                 print("Copying Premnagar 24-25")
-                copiedData=copyRange(1, 3, 27, 50, sheet)
-                pasteRange(3, 257, 29, 303, temp_sheet,copiedData)
+                copiedData=copyRange(1, 3, 27, 49, sheet)
+                pasteRange(31, 257, 57, 303, temp_sheet,copiedData)
                 
             #Ramanujnagar 24-25
             case "GapinprogressAccountverifctioncompletion_PMAYG_3305011_2024-2025.xlsx":
                 print("Copying Ramanujnagar 24-25")
-                copiedData=copyRange(1, 3, 27, 77, sheet)
-                pasteRange(3, 304, 29, 377, temp_sheet,copiedData)
+                copiedData=copyRange(1, 3, 27, 76, sheet)
+                pasteRange(31, 304, 57, 377, temp_sheet,copiedData)
                 
             #Surajpur 24-25
             case "GapinprogressAccountverifctioncompletion_PMAYG_3305009_2024-2025.xlsx":
                 print("Copying Surajpur 24-25")
-                copiedData=copyRange(1, 3, 27, 111, sheet)
-                pasteRange(3, 378, 29, 485, temp_sheet,copiedData)
+                copiedData=copyRange(1, 3, 27, 110, sheet)
+                pasteRange(31, 378, 57, 485, temp_sheet,copiedData)
                 
             case _:
                 print("file not matching with any case:" + files)
@@ -272,11 +274,84 @@ def CopyA4_2425_Data():
 
     print("A4 File saved")
     openpyxl.writer.excel.save_workbook(template, report_file)
+    template.save(report_file)
     template.close()
-        
     print("All files copied and pasted successfully")
 
 ##########################################################################################################
+##########################################################################################################
+def CopyA4_2526_Data():
+    xlfiles = list(Path(RAW_FILE).glob("GapinprogressAccountverifctioncompletion*2025-2026*.xlsx"))
+    print(xlfiles)
+    #File to be copied
+    print("starting A4 Copy")
+    #File to be pasted into
+    template = openpyxl.load_workbook(report_file) #Add file name
+ 
+    # Copying A4 Files 2024-25
+    print("Opening A4 Sheet")
+    temp_sheet = template["NewA4Report_2426"] 
+    for files_list in xlfiles:
+        
+        wb = openpyxl.load_workbook(files_list) 
+        sheet = wb['Sheet1']
+        
+        #copyRange(startCol, startRow, endCol, endRow, sheet)
+        #pasteRange(startCol, startRow, endCol, endRow, sheetReceiving,copiedData)
+        files = Path(files_list).name
+        print("Copying: "+ files +" in main excel file")
+        match files:
+            #Bhaiyathan 24-25
+            case "GapinprogressAccountverifctioncompletion_PMAYG_3305012_2025-2026.xlsx":
+                print("Copying Bhaiyathan 24-25")
+                copiedData=copyRange(1, 3, 27, 80, sheet)
+                pasteRange(59, 3, 85, 80, temp_sheet,copiedData)
+                                
+            #Odgi 24-25
+            case "GapinprogressAccountverifctioncompletion_PMAYG_3305013_2025-2026.xlsx":
+                print("Copying Odgi 24-25")
+                copiedData=copyRange(1, 3, 27, 76, sheet)
+                pasteRange(59, 81, 85, 154, temp_sheet,copiedData)
+                
+            #Pratappur 24-25
+            case "GapinprogressAccountverifctioncompletion_PMAYG_3305015_2025-2026.xlsx":
+                print("Copying Pratappur 24-25")
+                copiedData=copyRange(1, 3, 27, 104, sheet)
+                pasteRange(59, 155, 85, 256, temp_sheet,copiedData)
+                
+            #Premnagar 24-25
+            case "GapinprogressAccountverifctioncompletion_PMAYG_3305010_2025-2026.xlsx":
+                print("Copying Premnagar 24-25")
+                copiedData=copyRange(1, 3, 27, 49, sheet)
+                pasteRange(59, 257, 85, 303, temp_sheet,copiedData)
+                
+            #Ramanujnagar 24-25
+            case "GapinprogressAccountverifctioncompletion_PMAYG_3305011_2025-2026.xlsx":
+                print("Copying Ramanujnagar 24-25")
+                copiedData=copyRange(1, 3, 27, 76, sheet)
+                pasteRange(59, 304, 85, 377, temp_sheet,copiedData)
+                
+            #Surajpur 24-25
+            case "GapinprogressAccountverifctioncompletion_PMAYG_3305009_2025-2026.xlsx":
+                print("Copying Surajpur 24-25")
+                copiedData=copyRange(1, 3, 27, 110, sheet)
+                pasteRange(59, 378, 85, 485, temp_sheet,copiedData)
+                
+            case _:
+                print("file not matching with any case:" + files)
+
+        wb.close()  
+        print("done")
+
+    print("A4 File saved")
+    openpyxl.writer.excel.save_workbook(template, report_file)
+    template.save(report_file)
+    template.close()
+    print("All files copied and pasted successfully")
+
+##########################################################################################################
+
+
 def CopyA2_2425_Data_old():
 
     print("Swaping today's A2 To Old Data")
@@ -284,8 +359,8 @@ def CopyA2_2425_Data_old():
     print(report_file)
     template = openpyxl.load_workbook(report_file) #Add file name
     # Copying A2 Files 2024-25
-    a2_new = template["2024-24 A2"]
-    a2_old = template["2024-24 A2_old"]
+    a2_new = template["2024-26 A2"]
+    a2_old = template["2024-26 A2_old"]
     copied_data = copyRange(3, 2, 15, 484, a2_new)
     pasteRange(3, 2, 15, 484, a2_old,copied_data)
     print("Swaping A2 File completed.")
@@ -300,7 +375,7 @@ def CopyA4_2425_Data_old():
     #File to be pasted into
     template = openpyxl.load_workbook(report_file) #Add file name
     # Copying A2 Files 2024-25
-    a2_new = template["NewA4Report_2425"]
+    a2_new = template["NewA4Report_2426"]
     a2_old = template["OldA4Report_2425"]
     copied_data = copyRange(3, 3, 29, 485, a2_new)
     pasteRange(3, 3, 29, 485, a2_old,copied_data)
@@ -464,9 +539,9 @@ def CopyA4_1625_Data():
 # excution starts here
 ##########################################################################################################
 #dir_path = os.path.dirname(os.path.realpath(__file__))
-base_path = Path("D:\\Office\\000Reports\\0000April 2026\\07042026")
+base_path = Path("D:\\Office\\000Reports\\0000May 2026\\04052026")
 raw_file_path = "portalData"
-base_file = "PMAYG_TA-AM_WISE_REPORT_06022026_03042026_COLL_M.xlsm"
+base_file = "PMAYG_TA-AM_WISE_REPORT_04042026_05052026.xlsm"
 
 report_file = base_path.joinpath(base_file)
 RAW_FILE = base_path.joinpath(raw_file_path)
@@ -505,10 +580,11 @@ for f in file_list_xlsx:
 #swap_2425
 #Swap_A2_for_progress()
 #CopyA2_2425_Data()
-CopyA2_2526_Data()
+#CopyA2_2526_Data()
 
-#Swap_A4_for_progress()
+Swap_A4_for_progress()
 #CopyA4_2425_Data()
+#CopyA4_2526_Data()
 #CopyA4_2526_Data()
 
 
