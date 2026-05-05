@@ -48,27 +48,31 @@ def pasteRange(startCol, startRow, endCol, endRow, sheetReceiving,copiedData):
 ##########################################################################################################
 def Swap_A2_for_progress():
     print("Swaping Current Data to Old for progress...")
-    wb = openpyxl.load_workbook(report_file, data_only=True) 
-    New_sheet = wb['2024-26 A2']
-    old_sheet = wb['2024-26 A2_old']
+    wb_read = openpyxl.load_workbook(report_file, data_only=True) 
+    wb_write = openpyxl.load_workbook(report_file, data_only=False) 
+    New_sheet = wb_read['2024-26 A2']
+    old_sheet = wb_write['2024-26 A2_old']
     #copyRange(startCol, startRow, endCol, endRow, sheet)
     copiedData=copyRange(3, 2, 15, 484, New_sheet)
     #pasteRange(startCol, startRow, endCol, endRow, sheetReceiving,copiedData):
     pasteRange(3, 2, 15, 484, old_sheet, copiedData)
-    wb.save(report_file)
-    wb.close()
+    wb_write.save(report_file)
+    wb_write.close()
+    wb_read.close()
     print("Swaping A2 File completed.")
 
 def Swap_A4_for_progress():
     print("Swaping Current A4 Data to Old for progress...")
-    wb = openpyxl.load_workbook(report_file, data_only=True) 
-    New_sheet = wb['NewA4Report_2426']
-    old_sheet = wb['OldA4Report_2426']
+    wb_read = openpyxl.load_workbook(report_file, data_only=True) 
+    wb_write = openpyxl.load_workbook(report_file, data_only=False) 
+    New_sheet = wb_read['NewA4Report_2426']
+    old_sheet = wb_write['OldA4Report_2426']
     #copyRange(startCol, startRow, endCol, endRow, sheet)
     copiedData=copyRange(3, 3, 29, 485, New_sheet)
     pasteRange(3, 3, 29, 485, old_sheet, copiedData)
-    wb.save(report_file)
-    wb.close()
+    wb_write.save(report_file)
+    wb_write.close()
+    wb_read.close()
     print("Swaping A4 File completed.")
 
 
@@ -84,9 +88,10 @@ def CopyA2_2425_Data():
         #File to be copied
         print("starting A2 Copy")
         #File to be pasted into
-        template = openpyxl.load_workbook(report_file, data_only=True)
+        #template_read = openpyxl.load_workbook(report_file, data_only=True)
+        template_write = openpyxl.load_workbook(report_file, data_only=False)
         # Copying A2 Files 2024-25
-        temp_sheet = template["2024-26 A2"] 
+        temp_sheet = template_write["2024-26 A2"] 
         
         for files_list in xlfiles:
             wb = openpyxl.load_workbook(files_list, read_only=True) 
@@ -136,8 +141,8 @@ def CopyA2_2425_Data():
                     print("file not matching with any case:" + files)
             wb.close()  
         print("A2 File saved")
-        template.save(report_file)
-        template.close()
+        template_write.save(report_file)
+        template_write.close()
         print("All files copied and pasted successfully")
 
 ##########################################################################################################
@@ -152,9 +157,9 @@ def CopyA2_2526_Data():
         #File to be copied
         print("starting A2 Copy")
         #File to be pasted into
-        template = openpyxl.load_workbook(report_file, data_only=True)
+        template_write = openpyxl.load_workbook(report_file, data_only=False)
         # Copying A2 Files 2024-25
-        temp_sheet = template["2024-26 A2"] 
+        temp_sheet = template_write["2024-26 A2"] 
         
         for files_list in xlfiles:
             wb = openpyxl.load_workbook(files_list, read_only=True) 
@@ -204,8 +209,8 @@ def CopyA2_2526_Data():
                     print("file not matching with any case:" + files)
             wb.close()  
         print("A2 File saved")
-        template.save(report_file)
-        template.close()
+        template_write.save(report_file)
+        template_write.close()
         print("All files copied and pasted successfully")
 
 ##########################################################################################################
@@ -215,11 +220,11 @@ def CopyA4_2425_Data():
     #File to be copied
     print("starting A4 Copy")
     #File to be pasted into
-    template = openpyxl.load_workbook(report_file) #Add file name
+    template_write = openpyxl.load_workbook(report_file,data_only=False) #Add file name
  
     # Copying A4 Files 2024-25
     print("Opening A4 Sheet")
-    temp_sheet = template["NewA4Report_2426"] 
+    temp_sheet = template_write["NewA4Report_2426"] 
     for files_list in xlfiles:
         
         wb = openpyxl.load_workbook(files_list) 
@@ -273,9 +278,8 @@ def CopyA4_2425_Data():
         print("done")
 
     print("A4 File saved")
-    openpyxl.writer.excel.save_workbook(template, report_file)
-    template.save(report_file)
-    template.close()
+    template_write.save(report_file)
+    template_write.close()
     print("All files copied and pasted successfully")
 
 ##########################################################################################################
@@ -286,11 +290,11 @@ def CopyA4_2526_Data():
     #File to be copied
     print("starting A4 Copy")
     #File to be pasted into
-    template = openpyxl.load_workbook(report_file) #Add file name
+    template_write = openpyxl.load_workbook(report_file, data_only=False) #Add file name
  
     # Copying A4 Files 2024-25
     print("Opening A4 Sheet")
-    temp_sheet = template["NewA4Report_2426"] 
+    temp_sheet = template_write["NewA4Report_2426"] 
     for files_list in xlfiles:
         
         wb = openpyxl.load_workbook(files_list) 
@@ -344,9 +348,8 @@ def CopyA4_2526_Data():
         print("done")
 
     print("A4 File saved")
-    openpyxl.writer.excel.save_workbook(template, report_file)
-    template.save(report_file)
-    template.close()
+    template_write.save(report_file)
+    template_write.close()
     print("All files copied and pasted successfully")
 
 ##########################################################################################################
@@ -578,14 +581,14 @@ for f in file_list_xlsx:
 
 ## 24-25 Files
 #swap_2425
-#Swap_A2_for_progress()
-#CopyA2_2425_Data()
-#CopyA2_2526_Data()
+Swap_A2_for_progress()
+CopyA2_2425_Data()
+CopyA2_2526_Data()
 
-Swap_A4_for_progress()
-#CopyA4_2425_Data()
-#CopyA4_2526_Data()
-#CopyA4_2526_Data()
+#Swap_A4_for_progress()
+CopyA4_2425_Data()
+CopyA4_2526_Data()
+
 
 
 
