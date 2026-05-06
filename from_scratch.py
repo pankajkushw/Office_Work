@@ -542,7 +542,7 @@ def CopyA4_1625_Data():
 # excution starts here
 ##########################################################################################################
 #dir_path = os.path.dirname(os.path.realpath(__file__))
-base_path = Path("D:\\Office\\000Reports\\0000May 2026\\04052026")
+base_path = Path("D:\\Office\\000Reports\\0000May 2026\\06052026")
 raw_file_path = "portalData"
 base_file = "PMAYG_TA-AM_WISE_REPORT_04042026_05052026.xlsm"
 
@@ -581,13 +581,13 @@ for f in file_list_xlsx:
 
 ## 24-25 Files
 #swap_2425
-Swap_A2_for_progress()
-CopyA2_2425_Data()
-CopyA2_2526_Data()
+#Swap_A2_for_progress()
+#CopyA2_2425_Data()
+#CopyA2_2526_Data()
 
-#Swap_A4_for_progress()
-CopyA4_2425_Data()
-CopyA4_2526_Data()
+Swap_A4_for_progress()
+#CopyA4_2425_Data()
+#CopyA4_2526_Data()
 
 
 

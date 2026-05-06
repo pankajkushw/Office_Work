@@ -7,89 +7,31 @@ from PIL import Image
 import pytesseract
 import cv2
 
-FY_type = ["PMAYG Cumulative progress", "2024-2025", "2025-2026"]
-Scheme_type = ["PRADHAN MANTRI AWAAS YOJANA GRAMIN"]
-State_type = ["CHHATTISGARH"]
-District_type = ["SURAJPUR"]
-block_type = ["BHAIYATHAN", "ODAGI", "PRATAPPUR", "PREMNAGAR", "RAMANUJNAGAR", "SURAJPUR"]
-
-driver = webdriver.Chrome()
-driver.get("https://report.pmayg.dord.gov.in//netiay/PhysicalProgressReport/GapInProgressAccountVerificationCompletion.aspx")
-os.environ["OMP_THREAD_LIMIT"] = "1"
-
-WAIT_SECONDS = 3
-driver.implicitly_wait(10) 
 def mySleepFunction(seconds):
     for i in range(seconds):
         print(f"Waiting... {seconds - i} seconds remaining", end="\r")
         time.sleep(1)
 
-def solveCaptcha():
 
-    captcha_image = driver.find_element(By.ID, "ctl00_ContentPlaceHolder1_imgCaptcha")
-    captcha_image.screenshot("captcha.png")    
-    captcha_text = pytesseract.image_to_string("captcha.png", config='--psm 7 --oem 3 -c tessedit_char_whitelist=0123456789+-*/()')
-    mySleepFunction(2) #Wait for captcha to be solved
-    print("Captcha Text:", captcha_text)
-    result = eval(captcha_text)
-    
-    print("Captcha Result:", result)
-    
-    captcha_input = driver.find_element(By.ID, "ctl00_ContentPlaceHolder1_txtCaptcha")
-    captcha_input.send_keys(str(result))
-    return result    
+FY_file_link = {"2015-16":"https://mnregaweb4.nic.in/netnrega/ongo_comp_pds_wrk_rpt_new.aspx?page=D&short_name=&state_name=CHHATTISGARH&state_code=33&district_name=SURAJPUR&district_code=3326&fin_year=2015-2016&source=national&rbl1=0&rbl2=0&Digest=3gCuxmKvAMiJqCM9xdhuLQ",
+                "2016-17":"https://mnregaweb4.nic.in/netnrega/ongo_comp_pds_wrk_rpt_new.aspx?page=D&short_name=&state_name=CHHATTISGARH&state_code=33&district_name=SURAJPUR&district_code=3326&fin_year=2016-2017&source=national&rbl1=0&rbl2=0&Digest=ou40gSt7W1zGl5/7fAj7Yg",
+                "2017-18":"https://mnregaweb4.nic.in/netnrega/ongo_comp_pds_wrk_rpt_new.aspx?page=D&short_name=&state_name=CHHATTISGARH&state_code=33&district_name=SURAJPUR&district_code=3326&fin_year=2017-2018&source=national&rbl1=0&rbl2=0&Digest=QCg7N01gOK4vR/AzPgoTYQ",
+                "2018-19":"https://mnregaweb4.nic.in/netnrega/ongo_comp_pds_wrk_rpt_new.aspx?page=D&short_name=&state_name=CHHATTISGARH&state_code=33&district_name=SURAJPUR&district_code=3326&fin_year=2018-2019&source=national&rbl1=0&rbl2=0&Digest=E85qzeq83DlFatwBwOdfWw",
+                "2019-20":"https://mnregaweb4.nic.in/netnrega/ongo_comp_pds_wrk_rpt_new.aspx?page=D&short_name=&state_name=CHHATTISGARH&state_code=33&district_name=SURAJPUR&district_code=3326&fin_year=2019-2020&source=national&rbl1=0&rbl2=0&Digest=t01puYwSkjB42xGDe2I7nQ",
+                "2020-21":"https://mnregaweb4.nic.in/netnrega/ongo_comp_pds_wrk_rpt_new.aspx?page=D&short_name=&state_name=CHHATTISGARH&state_code=33&district_name=SURAJPUR&district_code=3326&fin_year=2020-2021&source=national&rbl1=0&rbl2=0&Digest=TY6ZiDTTlK9SxJhBmE1Aag",
+                "2021-22":"https://mnregaweb4.nic.in/netnrega/ongo_comp_pds_wrk_rpt_new.aspx?page=D&short_name=&state_name=CHHATTISGARH&state_code=33&district_name=SURAJPUR&district_code=3326&fin_year=2021-2022&source=national&rbl1=0&rbl2=0&Digest=pFCIY2TBHEwW9/UMaB6gJw",
+                "2022-23":"https://mnregaweb4.nic.in/netnrega/ongo_comp_pds_wrk_rpt_new.aspx?page=D&short_name=&state_name=CHHATTISGARH&state_code=33&district_name=SURAJPUR&district_code=3326&fin_year=2022-2023&source=national&rbl1=0&rbl2=0&Digest=Eu45/d65A4m5hwDXKyIzAg",
+                "2023-24":"https://mnregaweb4.nic.in/netnrega/ongo_comp_pds_wrk_rpt_new.aspx?page=D&short_name=&state_name=CHHATTISGARH&state_code=33&district_name=SURAJPUR&district_code=3326&fin_year=2023-2024&source=national&rbl1=0&rbl2=0&Digest=Ali2tMZbVMdxWQAdzmgprw",
+                "2024-25":"https://mnregaweb4.nic.in/netnrega/ongo_comp_pds_wrk_rpt_new.aspx?page=D&short_name=&state_name=CHHATTISGARH&state_code=33&district_name=SURAJPUR&district_code=3326&fin_year=2024-2025&source=national&rbl1=0&rbl2=0&Digest=kKbwLC4M57hU55YFddS6ug",
+                "2025-26":"https://mnregaweb4.nic.in/netnrega/ongo_comp_pds_wrk_rpt_new.aspx?page=D&short_name=&state_name=CHHATTISGARH&state_code=33&district_name=SURAJPUR&district_code=3326&fin_year=2025-2026&source=national&rbl1=0&rbl2=0&Digest=7/cekcr/Th+9BV08XjdumQ",
+}
 
-# 1. Change dropdown
-for fy in FY_type:
-    dropdown = Select(driver.find_element(By.ID, "ctl00_ContentPlaceHolder1_ddlFinYear"))
-    dropdown.select_by_visible_text(fy)
-    print(fy)
-    for scheme in Scheme_type:
-        dropdown = Select(driver.find_element(By.ID, "ctl00_ContentPlaceHolder1_ddlScheme"))
-        dropdown.select_by_visible_text(scheme)
-        print(scheme)
-        for state in State_type:
-            dropdown = Select(driver.find_element(By.ID, "ctl00_ContentPlaceHolder1_ddlState"))
-            dropdown.select_by_visible_text(state)
-            print(state)
-            if(state == "CHHATTISGARH"):
-                #Get State Data 
-                print("Solving Captcha...")
-                print( solveCaptcha())
-                button = driver.find_element(By.ID, "ctl00_ContentPlaceHolder1_btnSubmit")
-                button.click()
-                
-                button = driver.find_element(By.ID, "ctl00_ContentPlaceHolder1_btnExport")
-                button.click()
-                
-            
-            for district in District_type: 
-                dropdown = Select(driver.find_element(By.ID, "ctl00_ContentPlaceHolder1_ddlDistrict"))
-                dropdown.select_by_visible_text(district)
-                print(district)
-                print("Solving Captcha...")
-                print( solveCaptcha())
-                button = driver.find_element(By.ID, "ctl00_ContentPlaceHolder1_btnSubmit")
-                button.click()
-                
-                button = driver.find_element(By.ID, "ctl00_ContentPlaceHolder1_btnExport") 
-                button.click()
-                
-                #download block data for
-                for block in block_type:
-                    dropdown = Select(driver.find_element(By.ID, "ctl00_ContentPlaceHolder1_ddlBlock"))
-                    dropdown.select_by_visible_text(block)
-                    print(block)
-                    print("Solving Captcha...")
-                    print( solveCaptcha())
-                    button = driver.find_element(By.ID, "ctl00_ContentPlaceHolder1_btnSubmit")
-                    button.click()
-                    
-                    button = driver.find_element(By.ID, "ctl00_ContentPlaceHolder1_btnExport") 
-                    button.click()
-                    
+driver = webdriver.Chrome()
+os.environ["OMP_THREAD_LIMIT"] = "1"
+for link in FY_file_link:
 
-                mySleepFunction(5) #Wait for captcha to be solved
-                print("Data Downloaded for " + fy + " " + scheme + " " + state + " " + district)
-
-driver.quit()
+    driver.get(link)
+    download_click = driver.find_element(By.ID, "ctl00_ContentPlaceHolder1_LinkButton1")
+    download_click.click()
+    mySleepFunction(15) #Wait for captcha to be solved
+driver.quit()    
