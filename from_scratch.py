@@ -542,9 +542,10 @@ def CopyA4_1625_Data():
 # excution starts here
 ##########################################################################################################
 #dir_path = os.path.dirname(os.path.realpath(__file__))
-base_path = Path("D:\\Office\\000Reports\\0000May 2026\\06052026")
+base_path = Path("D:\\Office\\000Reports\\0000May 2026\\07052026")
 raw_file_path = "portalData"
-base_file = "PMAYG_TA-AM_WISE_REPORT_04042026_05052026.xlsm"
+backup_folder = raw_file_path.join("backup_folder")
+base_file = "PMAYG_TA-AM_WISE_REPORT_06042026_07052026.xlsm"
 
 report_file = base_path.joinpath(base_file)
 RAW_FILE = base_path.joinpath(raw_file_path)
@@ -573,21 +574,25 @@ for f in file_list_xlsx:
     df.to_excel(new_filename, index=False)
     
     # 4. Remove the old fake .xls file
+    if os.path.isdir(backup_folder):
+        print("folder exist, moving original files")
+    else:
+        Path(backup_folder).mkdir(parents=True, exist_ok=True)
+        
     shutil.move(f, RAW_FILE.joinpath("backup_folder"))  # Move the original .xls to a backup folder instead of deleting
-     
     #os.remove(f)
     print(f"Converted and moved: {f}")
 
 
 ## 24-25 Files
 #swap_2425
-#Swap_A2_for_progress()
-#CopyA2_2425_Data()
-#CopyA2_2526_Data()
+Swap_A2_for_progress()
+CopyA2_2425_Data()
+CopyA2_2526_Data()
 
 Swap_A4_for_progress()
-#CopyA4_2425_Data()
-#CopyA4_2526_Data()
+CopyA4_2425_Data()
+CopyA4_2526_Data()
 
 
 

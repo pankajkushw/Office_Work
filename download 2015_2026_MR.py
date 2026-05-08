@@ -29,9 +29,9 @@ FY_file_link = {"2015-16":"https://mnregaweb4.nic.in/netnrega/ongo_comp_pds_wrk_
 driver = webdriver.Chrome()
 os.environ["OMP_THREAD_LIMIT"] = "1"
 for link in FY_file_link:
-
-    driver.get(link)
+    print(f"Downloading MR Report for FY:  {link}")
+    driver.get(FY_file_link[link])
     download_click = driver.find_element(By.ID, "ctl00_ContentPlaceHolder1_LinkButton1")
     download_click.click()
-    mySleepFunction(15) #Wait for captcha to be solved
+    mySleepFunction(1) #Wait for captcha to be solved
 driver.quit()    
