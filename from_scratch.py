@@ -542,10 +542,10 @@ def CopyA4_1625_Data():
 # excution starts here
 ##########################################################################################################
 #dir_path = os.path.dirname(os.path.realpath(__file__))
-base_path = Path("D:\\Office\\000Reports\\0000May 2026\\07052026")
+base_path = Path("D:\\Office\\000Reports\\0000May 2026\\08052026")
 raw_file_path = "portalData"
 backup_folder = raw_file_path.join("backup_folder")
-base_file = "PMAYG_TA-AM_WISE_REPORT_06042026_07052026.xlsm"
+base_file = "PMAYG_TA-AM_WISE_REPORT_07042026_08052026.xlsm"
 
 report_file = base_path.joinpath(base_file)
 RAW_FILE = base_path.joinpath(raw_file_path)

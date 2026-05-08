@@ -62,6 +62,7 @@ def login():
 
     #calling to download A2 Report1649	1540	1330
     A2_Report()
+    Aawas_Plus_Report()
 
 def A2_Report():
     print("Navigating to A2 Report...")
@@ -122,6 +123,31 @@ def A2_Report():
                         button.click()
                         mySleepFunction(WAIT_SECONDS)
                     print("Data Downloaded for " + fy + " " + scheme + " " + state + " " + district)
+
+def Aawas_Plus_Report():
+    print("Navigating to Aawas+ Report...")
+    mySleepFunction(WAIT_SECONDS)
+    # Selcting A2 Report
+    try: 
+        link = driver.find_element(By.PARTIAL_LINK_TEXT, "AwaasPlus Physical Progress Report.")
+        link.click()
+    except Exception as e:
+        print("Error while navigating to A2 Report:", e)
+        driver.quit()
+        return
+    finally:
+        print("Navigation to A2 Report attempted.")
+
+    print("Aawas+ Report Selected")
+    for fy in FY_type:
+        dropdown = Select(driver.find_element(By.ID, "ctl00_ContentPlaceHolder1_ddlFinYear"))
+        dropdown.select_by_visible_text(fy)
+        print(fy)
+        button = driver.find_element(By.ID, "ctl00_ContentPlaceHolder1_btnSubmit")
+        button.click()
+        button = driver.find_element(By.ID, "ctl00_ContentPlaceHolder1_btnExport") 
+        button.click()
+        mySleepFunction(WAIT_SECONDS)
 
 # Login to the website
 login()
