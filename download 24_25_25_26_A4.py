@@ -55,7 +55,7 @@ for fy in FY_type:
             if(state == "CHHATTISGARH"):
                 #Get State Data 
                 print("Solving Captcha...")
-                print( solveCaptcha())
+                #print( solveCaptcha())
                 button = driver.find_element(By.ID, "ctl00_ContentPlaceHolder1_btnSubmit")
                 button.click()
                 
@@ -68,7 +68,7 @@ for fy in FY_type:
                 dropdown.select_by_visible_text(district)
                 print(district)
                 print("Solving Captcha...")
-                print( solveCaptcha())
+                #print( solveCaptcha())
                 button = driver.find_element(By.ID, "ctl00_ContentPlaceHolder1_btnSubmit")
                 button.click()
                 
@@ -81,7 +81,7 @@ for fy in FY_type:
                     dropdown.select_by_visible_text(block)
                     print(block)
                     print("Solving Captcha...")
-                    print( solveCaptcha())
+                    #print( solveCaptcha())
                     button = driver.find_element(By.ID, "ctl00_ContentPlaceHolder1_btnSubmit")
                     button.click()
                     

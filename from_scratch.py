@@ -6,7 +6,13 @@ import openpyxl.writer.excel
 import pandas as pd
 from pathlib import Path
 import shutil
+import time
+import warnings
 
+def mySleepFunction(seconds):
+    for i in range(seconds):
+        print(f"Waiting... {seconds - i} seconds remaining", end="\r")
+        time.sleep(1)
 
 #Takes: start cell, end cell, and sheet you want to copy from.
 def copyRange(startCol, startRow, endCol, endRow, sheet):
@@ -47,7 +53,7 @@ def pasteRange(startCol, startRow, endCol, endRow, sheetReceiving,copiedData):
 
 ##########################################################################################################
 def Swap_A2_for_progress():
-    print("Swaping Current Data to Old for progress...")
+    print("Swap_A2_for_progress...")
     wb_read = openpyxl.load_workbook(report_file, data_only=True) 
     wb_write = openpyxl.load_workbook(report_file, data_only=False) 
     New_sheet = wb_read['2024-26 A2']
@@ -142,7 +148,9 @@ def CopyA2_2425_Data():
             wb.close()  
         print("A2 File saved")
         template_write.save(report_file)
+        mySleepFunction(2)
         template_write.close()
+
         print("All files copied and pasted successfully")
 
 ##########################################################################################################
@@ -210,6 +218,7 @@ def CopyA2_2526_Data():
             wb.close()  
         print("A2 File saved")
         template_write.save(report_file)
+        mySleepFunction(2)
         template_write.close()
         print("All files copied and pasted successfully")
 
@@ -274,12 +283,14 @@ def CopyA4_2425_Data():
             case _:
                 print("file not matching with any case:" + files)
 
-        wb.close()  
+        wb.close()
         print("done")
 
     print("A4 File saved")
     template_write.save(report_file)
+    mySleepFunction(2)
     template_write.close()
+    
     print("All files copied and pasted successfully")
 
 ##########################################################################################################
@@ -340,15 +351,14 @@ def CopyA4_2526_Data():
                 print("Copying Surajpur 24-25")
                 copiedData=copyRange(1, 3, 27, 110, sheet)
                 pasteRange(59, 378, 85, 485, temp_sheet,copiedData)
-                
             case _:
                 print("file not matching with any case:" + files)
-
         wb.close()  
         print("done")
 
     print("A4 File saved")
     template_write.save(report_file)
+    mySleepFunction(2)
     template_write.close()
     print("All files copied and pasted successfully")
 
@@ -356,7 +366,6 @@ def CopyA4_2526_Data():
 
 
 def CopyA2_2425_Data_old():
-
     print("Swaping today's A2 To Old Data")
     #File to be pasted into
     print(report_file)
@@ -367,7 +376,7 @@ def CopyA2_2425_Data_old():
     copied_data = copyRange(3, 2, 15, 484, a2_new)
     pasteRange(3, 2, 15, 484, a2_old,copied_data)
     print("Swaping A2 File completed.")
-    openpyxl.writer.excel.save_workbook(template, report_file)
+    #openpyxl.writer.excel.save_workbook(template, report_file)
     template.save()
     template.close()
 
@@ -376,14 +385,16 @@ def CopyA2_2425_Data_old():
 def CopyA4_2425_Data_old():
     print("Swaping today's A4 To Old Data")
     #File to be pasted into
+    print(report_file)
     template = openpyxl.load_workbook(report_file) #Add file name
     # Copying A2 Files 2024-25
-    a2_new = template["NewA4Report_2426"]
-    a2_old = template["OldA4Report_2425"]
-    copied_data = copyRange(3, 3, 29, 485, a2_new)
-    pasteRange(3, 3, 29, 485, a2_old,copied_data)
+    a4_new = template["NewA4Report_2426"]
+    a4_old = template["OldA4Report_2425"]
+    copied_data = copyRange(3, 3, 29, 485, a4_new)
+    pasteRange(3, 3, 29, 485, a4_old,copied_data)
     print("Swaping A4 File completed.")
-    openpyxl.writer.excel.save_workbook(template, report_file)
+    #openpyxl.writer.excel.save_workbook(template, report_file)
+    template.save()
     template.close()
 
 ##########################################################################################################
@@ -542,10 +553,10 @@ def CopyA4_1625_Data():
 # excution starts here
 ##########################################################################################################
 #dir_path = os.path.dirname(os.path.realpath(__file__))
-base_path = Path("D:\\Office\\000Reports\\0000May 2026\\08052026")
+base_path = Path("D:\\Office\\000Reports\\0000May 2026\\21052026")
 raw_file_path = "portalData"
 backup_folder = raw_file_path.join("backup_folder")
-base_file = "PMAYG_TA-AM_WISE_REPORT_07042026_08052026.xlsm"
+base_file = "PMAYG_TA-AM_WISE_REPORT_18052026_21052026.xlsm"
 
 report_file = base_path.joinpath(base_file)
 RAW_FILE = base_path.joinpath(raw_file_path)
@@ -554,7 +565,7 @@ print(base_path)
 print("raw" + str(RAW_FILE))
 print(report_file)
 
- 
+warnings.simplefilter("ignore")
 file_list_xlsx = list(Path(RAW_FILE).glob("*.xls"))
 
 #Converting xls file into xlsx
@@ -586,15 +597,16 @@ for f in file_list_xlsx:
 
 ## 24-25 Files
 #swap_2425
-Swap_A2_for_progress()
-CopyA2_2425_Data()
-CopyA2_2526_Data()
+
 
 Swap_A4_for_progress()
-CopyA4_2425_Data()
-CopyA4_2526_Data()
+Swap_A2_for_progress()
 
+# CopyA4_2425_Data()
+# CopyA4_2526_Data()
 
+# CopyA2_2425_Data()
+# CopyA2_2526_Data()
 
 
 

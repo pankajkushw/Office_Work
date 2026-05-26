@@ -42,7 +42,7 @@ for reporting in Reporting_type:
         for state in State_type:
             dropdown = Select(driver.find_element(By.ID, "ctl00_ContentPlaceHolder1_ddlState"))
             dropdown.select_by_visible_text(state)
-            print(solveCaptcha())
+            #print(solveCaptcha())
             button = driver.find_element(By.ID, "ctl00_ContentPlaceHolder1_btnSubmit")
             button.click()
             button = driver.find_element(By.ID, "ctl00_ContentPlaceHolder1_btnExport")  
@@ -52,7 +52,7 @@ for reporting in Reporting_type:
                 dropdown.select_by_visible_text(district)
                 print(district)
                 print("Solving Captcha...")
-                print( solveCaptcha())
+                #print( solveCaptcha())
                 button = driver.find_element(By.ID, "ctl00_ContentPlaceHolder1_btnSubmit")
                 button.click()
                 button = driver.find_element(By.ID, "ctl00_ContentPlaceHolder1_btnExport") 
@@ -74,7 +74,7 @@ for reporting in Reporting_type:
                     if(state == "CHHATTISGARH"):
                         #Get State Data 
                         print("Solving Captcha...")
-                        print( solveCaptcha())
+                        #print( solveCaptcha())
                         button = driver.find_element(By.ID, "ctl00_ContentPlaceHolder1_btnSubmit")
                         button.click()
                         button = driver.find_element(By.ID, "ctl00_ContentPlaceHolder1_btnExport")
@@ -85,7 +85,7 @@ for reporting in Reporting_type:
                         dropdown.select_by_visible_text(district)
                         print(district)
                         print("Solving Captcha...")
-                        print( solveCaptcha())
+                        #print( solveCaptcha())
                         button = driver.find_element(By.ID, "ctl00_ContentPlaceHolder1_btnSubmit")
                         button.click()
                         button = driver.find_element(By.ID, "ctl00_ContentPlaceHolder1_btnExport") 
