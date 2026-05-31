@@ -19,7 +19,7 @@ os.environ["OMP_THREAD_LIMIT"] = "1"
 
 WAIT_SECONDS = 2
 USER_ID = "CH26"
-PASSWORD = "Dspr@2026"
+PASSWORD = "Dspr@202626"
 FY = "2025-2026"    
 driver.implicitly_wait(10) 
 def mySleepFunction(seconds):
