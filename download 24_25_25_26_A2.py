@@ -61,8 +61,8 @@ def login():
 
 
     #calling to download A2 Report1649	1540	1330
-    #A2_Report()
-    Aawas_Plus_Report()
+    A2_Report()
+    #Aawas_Plus_Report()
 
 def A2_Report():
     print("Navigating to A2 Report...")
