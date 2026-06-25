@@ -35,7 +35,7 @@ def solveLoginCaptcha():
 
     captcha_input = driver.find_element(By.ID, "ctl00_ContentPlaceHolder1_txtCaptcha")
     # check if captcha_text is empty or not
-    captcha_input.send_keys(str(captcha_text))
+    captcha_input.send_keys(captcha_text.strip())
     input("Press Enter after solving captcha and logging in...")  # Wait for user to solve captcha and log in
     return captcha_text  
 
@@ -61,8 +61,8 @@ def login():
 
 
     #calling to download A2 Report1649	1540	1330
-    #A2_Report()
-    Aawas_Plus_Report()
+    A2_Report()
+    #Aawas_Plus_Report()
 
 def A2_Report():
     print("Navigating to A2 Report...")
