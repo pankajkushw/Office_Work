@@ -77,6 +77,7 @@ for reporting in Reporting_type:
                         #print( solveCaptcha())
                         button = driver.find_element(By.ID, "ctl00_ContentPlaceHolder1_btnSubmit")
                         button.click()
+                        mySleepFunction(WAIT_SECONDS) #Wait for captcha to be solved
                         button = driver.find_element(By.ID, "ctl00_ContentPlaceHolder1_btnExport")
                         button.click()
                     

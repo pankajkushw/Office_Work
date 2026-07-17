@@ -75,9 +75,9 @@ def login():
 
 
     #calling to download A2 Report1649	1540	1330
-    #A2_Report()
-    #Aawas_Plus_Report()
-    WorkinProgress_Report()
+    A2_Report()
+    Aawas_Plus_Report()
+    #WorkinProgress_Report()
 
 def A2_Report():
     print("Navigating to A2 Report...")
@@ -207,82 +207,68 @@ def wait_for_download_complete(download_dir, timeout=300):
         time.sleep(1) # Check again every 1 second
 
 def WorkinProgress_Report():
-    w_FY_type = ["2016-2017", "2017-2018", "2018-2019", "2019-2020", "2020-2021", "2022-2023", "2025-2026"]
+    #w_FY_type = ["2016-2017", "2017-2018", "2018-2019", "2019-2020", "2020-2021", "2022-2023", "2025-2026"]
+    #Manual intervention required for clicking download button due to timeout issues.
+    w_FY_type = ["2024-2025"]
     print("Navigating to Work in Progress Report...")
-    
+    mySleepFunction(WAIT_SECONDS)
+    # Selcting A2 Report
     try: 
-        link = WebDriverWait(driver, 15).until(
-            EC.element_to_be_clickable((By.PARTIAL_LINK_TEXT, "Work Progress for PMAY-G"))
-        )
+        link = driver.find_element(By.PARTIAL_LINK_TEXT, "Work Progress for PMAY-G")
         link.click()
     except Exception as e:
-        print("Error navigating to report:", e)
+        print("Error while navigating to Work in Progress Report:", e)
         driver.quit()
         return
+    finally:
+        print("Navigation to Work in Progress Report attempted.")
 
-    wait = WebDriverWait(driver, 10)
-
-    # --- Helper function to dynamically extract valid values from a dropdown ---
-    def get_dropdown_options(element_id):
-        element = wait.until(EC.presence_of_element_located((By.ID, f"ctl00_ContentPlaceHolder1_{element_id}")))
-        select = Select(element)
-        # Exclude placeholder options like "--Select--", "Select Block", "All" if applicable
-        return [opt.text for opt in select.options if opt.text and "select" not in opt.text.lower() and opt.text != "All"]
-
-    def safe_select(element_id, value):
-        element = wait.until(EC.element_to_be_clickable((By.ID, f"ctl00_ContentPlaceHolder1_{element_id}")))
-        select = Select(element)
-        if select.first_selected_option.text != value:
-            select.select_by_visible_text(value)
-            # Give the ASP.NET PostBack a brief moment to finish updating dependent dropdowns
-            mySleepFunction(1.5)
-
-    # --- Start of Optimized Dynamic Loops ---
-    # 1. Loop through years
-    for fy_data in data_type:
-        safe_select("ddlyear", fy_data)
+    print("Work in Progress Report Selected")
+    for fy in data_type:
+        dropdown = Select(driver.find_element(By.ID, "ctl00_ContentPlaceHolder1_ddlyear"))
+        dropdown.select_by_visible_text(fy)
+        print(fy)
         
-        # 2. Loop through schemes
         for scheme in w_Scheme_type:
-            safe_select("rblScheme", scheme)
+            dropdown = Select(driver.find_element(By.ID, "ctl00_ContentPlaceHolder1_rblScheme"))
+            dropdown.select_by_visible_text(scheme)
+            print(scheme)
             
-            # 3. Loop through Fin Years
             for fy in w_FY_type:
-                safe_select("ddlFinYear", fy)
-                
-                # 4. Get and loop ONLY through blocks currently available on screen
-                available_blocks = get_dropdown_options("ddlBlock")
-                for block in available_blocks:
-                    safe_select("ddlBlock", block)
-                    
-                    # 5. Get and loop ONLY through panchayats belonging to this specific block
-                    available_panchayats = get_dropdown_options("ddlPanch")
-                    for panchayat in available_panchayats:
-                        safe_select("ddlPanch", panchayat)
-                        
-                        # 6. Get categories
-                        available_categories = get_dropdown_options("ddlCat")
-                        for category_type in available_categories:
-                            safe_select("ddlCat", category_type)
-                            
-                            # 7. Get progress types
-                            available_progress = get_dropdown_options("ddlSanction")
-                            for progress_type in available_progress:
-                                safe_select("ddlSanction", progress_type)
-                                
-                                print(f"Downloading: {block} -> {panchayat} -> {fy}")
-                                
-                                # Click Export Button instantly without static sleep
-                                btn_id = "ctl00_ContentPlaceHolder1_btnExportexcel"
-                                button = wait.until(EC.element_to_be_clickable((By.ID, btn_id)))
+                dropdown = Select(driver.find_element(By.ID, "ctl00_ContentPlaceHolder1_ddlFinYear"))
+                dropdown.select_by_visible_text(fy)
+                print(fy)
+                for block in block_type:
+                    dropdown = Select(driver.find_element(By.ID, "ctl00_ContentPlaceHolder1_ddlBlock"))
+                    dropdown.select_by_visible_text(block)
+                    print(block)
+                    for panchayat in Panchayat_type:
+                        dropdown = Select(driver.find_element(By.ID, "ctl00_ContentPlaceHolder1_ddlPanch"))
+                        dropdown.select_by_visible_text(panchayat)
+                        print(panchayat)
+                        for category_type in Category_type:
+                            dropdown = Select(driver.find_element(By.ID, "ctl00_ContentPlaceHolder1_ddlCat"))
+                            dropdown.select_by_visible_text(category_type)
+                            print(category_type)
+                            for progress_type in Progress_type:
+                                dropdown = Select(driver.find_element(By.ID, "ctl00_ContentPlaceHolder1_ddlSanction"))
+                                dropdown.select_by_visible_text(progress_type)
+                                print(progress_type)
+                                #download block data for
+                                button = driver.find_element(By.ID, "ctl00_ContentPlaceHolder1_btnExportexcel")
                                 button.click()
-                                
-                                # Use your dynamic download watcher (bypasses static mySleepFunction wait)
+                                mySleepFunction(5)
                                 new_file_name = f"WorkinProgress_{block}_{fy}"
-                                if wait_for_download_complete(DOWNLOAD_DIR, timeout=15):
-                                    rename_latest_download(new_file_name)
-                                else:
-                                    print(f"Skipping rename for {block} due to download timeout.")
+                                rename_latest_download(new_file_name)  
+                                mySleepFunction(2)                             
+
+                                # # NEW: Dynamically wait instead of using a static sleep timer
+                                # if wait_for_download_complete(DOWNLOAD_DIR, timeout=15):
+                                #     new_file_name = f"WorkinProgress_{block}_{fy}"
+                                #     rename_latest_download(new_file_name)
+                                # else:
+                                #     print(f"Skipping rename for {block} due to download timeout.")
+                                print("Data Downloaded for " + fy + " " + scheme + " " + fy + " " + block + " " + panchayat + " " + category_type + " " + progress_type)
 
 
 def rename_latest_download(new_filename):
