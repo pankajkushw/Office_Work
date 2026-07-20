@@ -1,0 +1,83 @@
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import Select, WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+import time, os
+from PIL import Image
+import pytesseract
+import cv2
+
+Sanction_fy_year = ["As per Generated Financial Year"]
+FY_type = ["2026-2027"]
+Scheme_type = ["PRADHAN MANTRI AWAAS YOJANA GRAMIN"]
+State_type = ["CHHATTISGARH"]
+District_type = ["SURAJPUR"]
+block_type = ["BHAIYATHAN", "ODAGI", "PRATAPPUR", "PREMNAGAR", "RAMANUJNAGAR", "SURAJPUR"]
+FTO_type = ["Total No. of FTO Generated"]
+
+driver = webdriver.Chrome()
+driver.get("https://report.pmayg.dord.gov.in/netiay/EFMSReport/SNASparsh_FtoTransactionSummaryReport.aspx")
+os.environ["OMP_THREAD_LIMIT"] = "1"
+
+WAIT_SECONDS = 3
+driver.implicitly_wait(10) 
+def mySleepFunction(seconds):
+    for i in range(seconds):
+        print(f"Waiting... {seconds - i} seconds remaining", end="\r")
+        time.sleep(1)
+
+def solveCaptcha():
+
+    captcha_image = driver.find_element(By.ID, "ctl00_ContentPlaceHolder1_imgCaptcha")
+    captcha_image.screenshot("captcha.png")    
+    captcha_text = pytesseract.image_to_string("captcha.png", config='--psm 7 --oem 3 -c tessedit_char_whitelist=0123456789+-*/()')
+    mySleepFunction(2) #Wait for captcha to be solved
+    print("Captcha Text:", captcha_text)
+    result = eval(captcha_text)
+    
+    print("Captcha Result:", result)
+    
+    captcha_input = driver.find_element(By.ID, "ctl00_ContentPlaceHolder1_txtCaptcha")
+    captcha_input.send_keys(str(result))
+    return result    
+
+for sfy in Sanction_fy_year:
+    dropdown = Select(driver.find_element(By.ID, "ctl00_ContentPlaceHolder1_ddlGenSan"))
+    dropdown.select_by_visible_text(sfy)
+    # 1. Change dropdown
+    for fy in FY_type:
+        dropdown = Select(driver.find_element(By.ID, "ctl00_ContentPlaceHolder1_ddlFinYear"))
+        dropdown.select_by_visible_text(fy)
+        print(fy)
+        for scheme in Scheme_type:
+            dropdown = Select(driver.find_element(By.ID, "ctl00_ContentPlaceHolder1_ddlScheme"))
+            dropdown.select_by_visible_text(scheme)
+            print(scheme)
+            for state in State_type:
+                dropdown = Select(driver.find_element(By.ID, "ctl00_ContentPlaceHolder1_ddlState"))
+                dropdown.select_by_visible_text(state)
+                print(state)
+                for district in District_type: 
+                    dropdown = Select(driver.find_element(By.ID, "ctl00_ContentPlaceHolder1_ddlDistrict"))
+                    dropdown.select_by_visible_text(district)
+                    print(district)
+                    print("Solving Captcha...")
+                    #print( solveCaptcha())
+                    for ftype in FTO_type:
+                        dropdown = Select(driver.find_element(By.ID, "ctl00_ContentPlaceHolder1_ddl_detail"))
+                        dropdown.select_by_visible_text(ftype)
+                        print(ftype)
+                        
+                        button = driver.find_element(By.ID, "ctl00_ContentPlaceHolder1_btnSubmit")
+                        button.click()
+
+
+                                   
+
+                    mySleepFunction(5) #Wait for captcha to be solved
+                    print("Data Downloaded for " + fy + " " + scheme + " " + state + " " + district)
+
+driver.quit()
+
+
+
