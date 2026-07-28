@@ -2,7 +2,7 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import Select, WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-import time, os
+import time, os, io
 from PIL import Image
 import pytesseract
 import cv2
@@ -77,75 +77,115 @@ for sfy in Sanction_fy_year:
                             button = driver.find_element(By.ID, "ctl00_ContentPlaceHolder1_btnSubmit")
                             button.click()
 
-                            link_elements = driver.find_elements(By.PARTIAL_LINK_TEXT, "FTO")
-                            urls = [link.get_attribute("href") for link in link_elements if link.get_attribute("href")]
+                            # link_elements = driver.find_elements(By.PARTIAL_LINK_TEXT, "FTO")
+                            # urls = [link.get_attribute("href") for link in link_elements if link.get_attribute("href")]
 
-                            print(f"Found {len(urls)} links to traverse.")
-                            all_tables_data = []
-                            # 4. Loop through each extracted URL
-                            # 2. Traverse each link
+                            # print(f"Found {len(urls)} links to traverse.")
+                            # all_tables_data = []
+
+                            # # Save the main window handle to return to the master report page
+                            # main_window = driver.current_window_handle
+                            # all_tables_data = []
+
+                            # 1. Target the links inside the "FTO File Name" column explicitly
+                            # Save the main report window handle context
                             main_window = driver.current_window_handle
-                            for index, url in enumerate(urls):
+                            all_tables_data = []
 
-                                driver.execute_script(url)
-                                time.sleep(2)
+                            print("Waiting for the master FTO transaction summary table rows to populate...")
 
-                                all_windows = driver.window_handles
-
-                                if len(all_windows)>1:
-                                    driver.switch_to.window(all_windows[-1])
-
-                                # Wait for the data table on the sub-page to completely render
-                                # Replace 'table.target-data-table' with your actual target table selector
+                            try:
+                                # 1. Broadly wait for the data table container to be visible on screen
                                 WebDriverWait(driver, 15).until(
-                                    EC.presence_of_element_located((By.CSS_SELECTOR, "table#ctl00_ContentPlaceHolder1_grdDetail"))
+                                    EC.presence_of_element_located((By.XPATH, "//table[contains(@id, 'grd')] | //table[contains(@id, 'gv')]"))
                                 )
-                                time.sleep(1) # Safe buffer for AJAX data rendering
+                                time.sleep(2) # Vital buffer for dynamic ASP.NET grid rows to fully populate
                                 
-                                # 3. Extract the inner HTML text of the table
-                                target_table_element = driver.find_element(By.CSS_SELECTOR, "table#ctl00_ContentPlaceHolder1_grdDetail")
-                                table_html = target_table_element.get_attribute("outerHTML")
-                                                        
-                                # 4. Use Pandas to convert HTML directly into a DataFrame
-                                # read_html returns a list of dataframes; grab the first one [0]
-                                try:
-                                    dfs = pd.read_html(table_html)
-                                    if dfs:
-                                        df = dfs[0]
+                                # 2. A more flexible XPath that targets any link text inside the rows of your report table
+                                fto_links_xpath = "//table[contains(@id, 'grd') or contains(@id, 'gv')]//tr[td]//td/a"
+                                
+                                # Extract the live clickable list elements
+                                links_elements = driver.find_elements(By.XPATH, fto_links_xpath)
+                                total_fto_files = len(links_elements)
+                                
+                                print(f"Found {total_fto_files} FTO file links to process.")
+
+                            except Exception as e:
+                                print(f"Error locating report data grid table links: {e}")
+                                total_fto_files = 0
+
+                            if total_fto_files > 0:
+                                for index in range(total_fto_files):
+                                    print(f"\nProcessing file [{index + 1}/{total_fto_files}]")
+                                    
+                                    try:
+                                        # Force focus back to the master list table view 
+                                        driver.switch_to.window(main_window)
                                         
-                                        # Optional: Add a metadata column tracking which URL this row came from
-                                        df["Source_URL"] = url 
+                                        # Re-fetch links live to completely prevent StaleElementReferenceException
+                                        links = driver.find_elements(By.XPATH, fto_links_xpath)
+                                        target_link = links[index]
+                                        file_name = target_link.text.strip()
+                                        print(f"Clicking on FTO File: {file_name}")
                                         
-                                        all_tables_data.append(df)
-                                        print(f"Successfully scraped {len(df)} rows.")
-                                except Exception as e:
-                                    print(f"Could not parse table on page {index + 1}: {e}")
+                                        # Click the link using JavaScript execution for 100% reliable tracking
+                                        driver.execute_script("arguments[0].click();", target_link)
+                                        time.sleep(2) # Safe buffer for the browser to load the data view or tab
 
-                                if len(driver.window_handles) > 1:
-                                    driver.close()
+                                        # 2. Check if a new tab window was spawned by the click action
+                                        all_windows = driver.window_handles
+                                        if len(all_windows) > 1:
+                                            driver.switch_to.window(all_windows[-1])
 
-                                driver.switch_to.window(main_window)
+                                        # 3. Wait for the detail table container to load completely
+                                        WebDriverWait(driver, 15).until(
+                                            EC.presence_of_element_located((By.CSS_SELECTOR, "table#ctl00_ContentPlaceHolder1_grdDetail"))
+                                        )
+                                        time.sleep(1)
+                                        
+                                        # 4. Extract the outerHTML structure
+                                        target_table_element = driver.find_element(By.CSS_SELECTOR, "table#ctl00_ContentPlaceHolder1_grdDetail")
+                                        table_html = target_table_element.get_attribute("outerHTML")
+                                                                
+                                        # 5. Load the target data into your Pandas collection arrays
+                                        dfs = pd.read_html(io.StringIO(table_html))
+                                        if dfs:
+                                            df = dfs[0]
+                                            # --- NORMALIZE MULTI-INDEX HEADERS IF PRESENT ---
+                                            # If Pandas reads an extra structural banner row, flatten it out
+                                            if isinstance(df.columns, pd.MultiIndex):
+                                                df.columns = df.columns.get_level_values(-1)
 
-                            # 5. Combine and export the compiled dataset
-                            if all_tables_data:
-                                combined_df = pd.concat(all_tables_data, ignore_index=True)
-                                
-                                # Export Option A: To Excel Workbook
-                                excel_filename = "scraped_tables_output.xlsx"
-                                combined_df.to_excel(excel_filename, index=False)
-                                print(f"\nSaved all data to Excel: {excel_filename}")
-                                
-                                # Export Option B: To CSV File (Uncomment if preferred)
-                                # csv_filename = "scraped_tables_output.csv"
-                                # combined_df.to_csv(csv_filename, index=False, encoding='utf-8-sig')
-                                # print(f"\nSaved all data to CSV: {csv_filename}")
-                            else:
-                                print("No table data was found or collected.")
+                                            df = df.iloc[:-1]
+                                            
+                                            # Map tracking metadata tags
+                                            df["FTO_File_Name"] = file_name
+                                            df["Source_Index"] = index + 1
+                                            
+                                            all_tables_data.append(df)
+                                            print(f"Successfully scraped {len(df)} rows from {file_name}.")
 
+                                    except Exception as e:
+                                        print(f"Could not parse data for item index {index + 1}: {e}")
+
+                                    # 6. CRITICAL CLEANUP: If a new tab window popped open, close it to return to the master table
+                                    if len(driver.window_handles) > 1:
+                                        driver.close()
+                                        driver.switch_to.window(main_window)
+                                    else:
+                                        # If it updated on the SAME page, use browser back to return to the master view
+                                        # Uncomment the line below ONLY if the details view opens on the same tab without creating a new window
+                                        # driver.back()
+                                        pass
+
+                                # 7. Compile everything and save
+                                if all_tables_data:
+                                    combined_df = pd.concat(all_tables_data, ignore_index=True)
+                                    combined_df.to_excel("scraped_fto_details_output.xlsx", index=False)
+                                    print("\nSaved all collected FTO datasets to Excel file successfully!")
 
                     mySleepFunction(5) #Wait for captcha to be solved
                     print("Data Downloaded for " + fy + " " + scheme + " " + state + " " + district)
-
 driver.quit()
 
 
