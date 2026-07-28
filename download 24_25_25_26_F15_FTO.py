@@ -2,6 +2,7 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import Select, WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.chrome.options import Options
 import time, os, io
 from PIL import Image
 import pytesseract
@@ -17,7 +18,15 @@ District_type = ["SURAJPUR"]
 block_type = ["PREMNAGAR"]
 FTO_type = ["Total No. of FTO Generated"]
 
-driver = webdriver.Chrome()
+# 1. Configure Chrome Options for Headless Mode
+chrome_options = Options()
+chrome_options.add_argument("--headless=new")  # Runs completely invisible
+chrome_options.add_argument("--disable-gpu")     # Saves extra processing power
+chrome_options.add_argument("--window-size=1920,1080")  # Prevents elements from hiding on small screens
+chrome_options.add_argument("--no-sandbox")
+chrome_options.add_argument("--disable-dev-shm-usage")
+
+driver = webdriver.Chrome(options=chrome_options)
 driver.get("https://report.pmayg.dord.gov.in/netiay/EFMSReport/SNASparsh_FtoTransactionSummaryReport.aspx")
 os.environ["OMP_THREAD_LIMIT"] = "1"
 
