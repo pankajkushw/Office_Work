@@ -15,7 +15,7 @@ Scheme_type = ["PRADHAN MANTRI AWAAS YOJANA GRAMIN"]
 State_type = ["CHHATTISGARH"]
 District_type = ["SURAJPUR"]
 #block_type = ["BHAIYATHAN", "ODAGI", "PRATAPPUR", "PREMNAGAR", "RAMANUJNAGAR", "SURAJPUR"]
-block_type = ["PREMNAGAR"]
+block_type = ["PRATAPPUR"]
 FTO_type = ["Total No. of FTO Generated"]
 
 # 1. Configure Chrome Options for Headless Mode
@@ -27,6 +27,7 @@ chrome_options.add_argument("--no-sandbox")
 chrome_options.add_argument("--disable-dev-shm-usage")
 
 driver = webdriver.Chrome(options=chrome_options)
+#driver = webdriver.Chrome()
 driver.get("https://report.pmayg.dord.gov.in/netiay/EFMSReport/SNASparsh_FtoTransactionSummaryReport.aspx")
 os.environ["OMP_THREAD_LIMIT"] = "1"
 
@@ -86,18 +87,6 @@ for sfy in Sanction_fy_year:
                             button = driver.find_element(By.ID, "ctl00_ContentPlaceHolder1_btnSubmit")
                             button.click()
 
-                            # link_elements = driver.find_elements(By.PARTIAL_LINK_TEXT, "FTO")
-                            # urls = [link.get_attribute("href") for link in link_elements if link.get_attribute("href")]
-
-                            # print(f"Found {len(urls)} links to traverse.")
-                            # all_tables_data = []
-
-                            # # Save the main window handle to return to the master report page
-                            # main_window = driver.current_window_handle
-                            # all_tables_data = []
-
-                            # 1. Target the links inside the "FTO File Name" column explicitly
-                            # Save the main report window handle context
                             main_window = driver.current_window_handle
                             all_tables_data = []
 
@@ -170,6 +159,7 @@ for sfy in Sanction_fy_year:
                                             # Map tracking metadata tags
                                             df["FTO_File_Name"] = file_name
                                             df["Source_Index"] = index + 1
+                                            df["block"] = block
                                             
                                             all_tables_data.append(df)
                                             print(f"Successfully scraped {len(df)} rows from {file_name}.")
