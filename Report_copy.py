@@ -53,8 +53,8 @@ def pasteRange(startCol, startRow, endCol, endRow, sheetReceiving,copiedData):
 
 ##########################################################################################################
 
-def Swap_MR():
-    print("Swaping previous data into backup")
+def Swap_MMAYG():
+    print("Swaping previous data into backup of MMAYG")
     wb_read = openpyxl.load_workbook(report_file, data_only=True) 
     wb_write = openpyxl.load_workbook(report_file, data_only=False) 
     New_sheet = wb_read['5_MMAY']
@@ -69,7 +69,7 @@ def Swap_MR():
     wb_write.save(report_file)
     wb_write.close()
     wb_read.close()
-    print("Swaping A4 File completed.")
+    print("Swaping previous data into backup of MMAYG. Completed.")
 
 def Swap_FTO():
     print("Swaping previous FTO data into backup")
@@ -119,18 +119,21 @@ def Swap_Daily_Report_Format_1626():
     old_sheet = wb_write['Daily Report Format24-25']
     #copyRange(startCol, startRow, endCol, endRow, sheet)
     copiedData=copyRange(1, 3, 25, 11, New_sheet)
-    pasteRange(30, 3, 54, 11, old_sheet, copiedData)
+    pasteRange(30, 3, 56, 11, old_sheet, copiedData)
 
 
+    # Plinth, completion and 16-23 data swaping
     New_sheet = wb_read['Blockwise_new _Sorted']
     old_sheet = wb_write['Blockwise_new _Sorted']
     #copyRange(startCol, startRow, endCol, endRow, sheet)
     copiedData=copyRange(6, 4, 6, 11, New_sheet)
     pasteRange(5, 4, 5, 11, old_sheet, copiedData)
 
+    #Completion Tagging
     copiedData=copyRange(11, 4, 11, 11, New_sheet)
     pasteRange(10, 4, 10, 11, old_sheet, copiedData)
 
+    #16-23 completion
     copiedData=copyRange(18, 4, 18, 11, New_sheet)
     pasteRange(17, 4, 17, 11, old_sheet, copiedData)
 
@@ -184,10 +187,10 @@ def Swap_MR():
     copiedData=copyRange(12, 3, 12, 11, New_sheet)
     pasteRange(11, 3, 11, 11, old_sheet, copiedData)   
 
-    New_sheet = wb_read['4_MR_Only90Days']
-    old_sheet = wb_write['4_MR_Only90Days']
-    copiedData=copyRange(6, 3, 6, 11, New_sheet)
-    pasteRange(5, 3, 5, 11, old_sheet, copiedData)  
+    New_sheet = wb_read['4_MR Final _Daily']
+    old_sheet = wb_write['4_MR Final _Daily']
+    copiedData=copyRange(5, 3, 5, 11, New_sheet)
+    pasteRange(17, 3, 17, 11, old_sheet, copiedData)  
 
     
     wb_write.save(report_file)
@@ -223,7 +226,7 @@ def Copy_All_Data():
             print(x)
     
         #File to be copied
-        print("starting A2 Copy")
+        print("starting File copy")
         #File to be pasted into
         #template_read = openpyxl.load_workbook(report_file, data_only=True)
         template_write = openpyxl.load_workbook(report_file, data_only=False)
@@ -288,10 +291,10 @@ def Copy_All_Data():
 # excution starts here
 ##########################################################################################################
 #dir_path = os.path.dirname(os.path.realpath(__file__)) 
-base_path = Path("D:\\Office\\000Reports\\00000June 2026\\07062026")
+base_path = Path("F:\\Office\\000Reports\\0000Aug2026\\14082026")
 raw_file_path = "portalData"
 backup_folder = raw_file_path.join("backup_folder")
-base_file = "PMAYG-Meeting_01062026_To_06062026_exceLTL.xlsx"
+base_file = "PMAYG-Meeting_03082026_To_10082026_exceLTL.xlsx"
 
 report_file = base_path.joinpath(base_file)
 RAW_FILE = base_path.joinpath(raw_file_path)
@@ -330,13 +333,13 @@ for f in file_list_xlsx:
     print(f"Converted and moved: {f}")
 
 
-#Swap_MR()
+#Swap_MR() #Ok
 #Swap_FTO()
-#Swap_Daily_Report_Format_1626()
+Swap_Daily_Report_Format_1626()
 #Swap_Blockwise_Rank()
-Swap_MR()
+#Swap_MMAYG()
 
-Copy_All_Data()
+ #Copy_All_Data()
 
 
 
