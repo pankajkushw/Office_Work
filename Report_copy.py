@@ -102,76 +102,88 @@ def Swap_FTO():
     wb_write.close()
     wb_read.close()
     print("Swaping FTO DATA completed.")
-
-def Swap_Daily_Report_Format_1626():
-    print("Swaping Daily_Report_Format_1626, 24-25 & Blockwise_new _Sorted & Aawas+ pysical Data")
-    wb_read = openpyxl.load_workbook(report_file, data_only=True) 
-    wb_write = openpyxl.load_workbook(report_file, data_only=False) 
-    New_sheet = wb_read['Daily Report Format _1626']
-    old_sheet = wb_write['Daily Report Format _1626']
-    #24-25
-    #copyRange(startCol, startRow, endCol, endRow, sheet)
-    copiedData=copyRange(1, 3, 25, 11, New_sheet)
-    pasteRange(30, 3, 54, 11, old_sheet, copiedData)
-
-
-    New_sheet = wb_read['Daily Report Format24-25']
-    old_sheet = wb_write['Daily Report Format24-25']
-    #copyRange(startCol, startRow, endCol, endRow, sheet)
-    copiedData=copyRange(1, 3, 25, 11, New_sheet)
-    pasteRange(30, 3, 56, 11, old_sheet, copiedData)
-
-
-    # Plinth, completion and 16-23 data swaping
-    New_sheet = wb_read['Blockwise_new _Sorted']
-    old_sheet = wb_write['Blockwise_new _Sorted']
-    #copyRange(startCol, startRow, endCol, endRow, sheet)
-    copiedData=copyRange(6, 4, 6, 11, New_sheet)
-    pasteRange(5, 4, 5, 11, old_sheet, copiedData)
-
-    #Completion Tagging
-    copiedData=copyRange(11, 4, 11, 11, New_sheet)
-    pasteRange(10, 4, 10, 11, old_sheet, copiedData)
-
-    #16-23 completion
-    copiedData=copyRange(18, 4, 18, 11, New_sheet)
-    pasteRange(17, 4, 17, 11, old_sheet, copiedData)
-
-    # Swaping Aawas+ Cummulative Report A2_pwl_awas+
-    New_sheet = wb_read['A2_pwl_awas+']
-    old_sheet = wb_write['A2_pwl_awas+']
-    #copyRange(startCol, startRow, endCol, endRow, sheet)
-    copiedData=copyRange(1, 4, 13, 11, New_sheet)
-    pasteRange(1, 16, 13, 11, old_sheet, copiedData)
-
-    # Swaping Aawas+ Cummulative Report A2_pwl_awas+
-    New_sheet = wb_read['3_combined 16-23 physical']
-    old_sheet = wb_write['3_combined 16-23 physical']
-    #copyRange(startCol, startRow, endCol, endRow, sheet)
-    copiedData=copyRange(7, 3, 7, 10, New_sheet)
-    pasteRange(6, 3, 6, 10, old_sheet, copiedData)
-
-
-    wb_write.save(report_file)
-    wb_write.close()
-    wb_read.close()
-    print("Swaping Daily_Report_Format_1626, 24-25 & Blockwise_new _Sorted completed & Aawas+ pysical Data.")
-
-def Swap_Blockwise_Rank():
-    print("Swaping Blockwise_Rank")
-    wb_read = openpyxl.load_workbook(report_file, data_only=True) 
-    wb_write = openpyxl.load_workbook(report_file, data_only=False) 
-    New_sheet = wb_read['Blockwise_Rank']
-    old_sheet = wb_write['Blockwise_Rank']
-    #24-25
-    #copyRange(startCol, startRow, endCol, endRow, sheet)
-    copiedData=copyRange(10, 3, 10, 11, New_sheet)
-    pasteRange(15, 3, 15, 11, old_sheet, copiedData)
     
-    wb_write.save(report_file)
-    wb_write.close()
-    wb_read.close()
-    print("Swaping Blockwise_Rank completed.")    
+import openpyxl
+
+def Swap_Daily_Report_Format_1626(report_file):
+    print("Step 1: Reading values and formulas securely into memory...")
+    
+    # Extract calculated text/numbers (Stripping out formulas here)
+    wb_data = openpyxl.load_workbook(report_file, data_only=True)
+    # Extract raw formulas/structures (This keeps unedited formulas intact)
+    wb_raw = openpyxl.load_workbook(report_file, data_only=False)
+    
+    extracted_values = {}
+    
+    # Secure local function to copy values into system memory
+    def fetch_data(sheet_name, s_col, s_row, e_col, e_row):
+        sheet = wb_data[sheet_name]
+        matrix = []
+        for r in range(s_row, e_row + 1):
+            row_cells = []
+            for c in range(s_col, e_col + 1):
+                row_cells.append(sheet.cell(row=r, column=c).value)
+            matrix.append(row_cells)
+        return matrix
+
+    # Pulling values out of the data-only reader
+    extracted_values['sheet_1626'] = fetch_data('Daily Report Format _1626', 1, 3, 25, 11)
+    extracted_values['sheet_2425'] = fetch_data('Daily Report Format24-25', 1, 3, 25, 11)
+    
+    # Blockwise_new _Sorted extractions
+    extracted_values['sorted_plinth'] = fetch_data('Blockwise_new _Sorted', 6, 4, 6, 11)
+    extracted_values['sorted_completion'] = fetch_data('Blockwise_new _Sorted', 11, 4, 11, 11)
+    extracted_values['sorted_1623'] = fetch_data('Blockwise_new _Sorted', 18, 4, 18, 11)
+    
+    # Remaining sheets
+    extracted_values['sheet_aawas'] = fetch_data('A2_pwl_awas+', 1, 4, 13, 11)
+    extracted_values['sheet_combined'] = fetch_data('3_combined 16-23 physical', 7, 3, 7, 10)
+
+    # 6. Blockwise_Rank extraction
+    extracted_values['sheet_rank'] = fetch_data('Blockwise_Rank', 10, 3, 10, 11)
+
+    # 7. 4_MR Final extractions
+    extracted_values['mr_final_col9'] = fetch_data('4_MR Final', 9, 3, 9, 11)
+    extracted_values['mr_final_col12'] = fetch_data('4_MR Final', 12, 3, 12, 11)
+
+    # Close the data instance immediately to release any file hooks
+    wb_data.close()
+
+    print("Step 2: Transferring values onto the formula workbook blueprint...")
+    
+    # Local function to drop pure values onto destinations without corrupting formulas
+    def drop_data(sheet_obj, data_matrix, d_col, d_row):
+        for r_idx, row_data in enumerate(data_matrix):
+            for c_idx, val in enumerate(row_data):
+                sheet_obj.cell(row=d_row + r_idx, column=d_col + c_idx, value=val)
+
+    # Drop the text values onto our destinations inside the formula workbook blueprint
+    drop_data(wb_raw['Daily Report Format _1626'], extracted_values['sheet_1626'], d_col=30, d_row=3)
+    drop_data(wb_raw['Daily Report Format24-25'], extracted_values['sheet_2425'], d_col=30, d_row=3)
+    
+    sorted_sheet = wb_raw['Blockwise_new _Sorted']
+    drop_data(sorted_sheet, extracted_values['sorted_plinth'], d_col=5, d_row=4)
+    drop_data(sorted_sheet, extracted_values['sorted_completion'], d_col=10, d_row=4)
+    drop_data(sorted_sheet, extracted_values['sorted_1623'], d_col=17, d_row=4)
+    
+    drop_data(wb_raw['A2_pwl_awas+'], extracted_values['sheet_aawas'], d_col=1, d_row=16)
+    drop_data(wb_raw['3_combined 16-23 physical'], extracted_values['sheet_combined'], d_col=6, d_row=3)
+
+    # 6. Blockwise_Rank drop
+    drop_data(wb_raw['Blockwise_Rank'], extracted_values['sheet_rank'], d_col=16, d_row=3)
+
+    # 7. 4_MR Final drops
+    sheet_mr_final_raw = wb_raw['4_MR Final']
+    drop_data(sheet_mr_final_raw, extracted_values['mr_final_col9'], d_col=8, d_row=3)
+    drop_data(sheet_mr_final_raw, extracted_values['mr_final_col12'], d_col=11, d_row=3)
+
+    print("Step 3: Saving modifications...")
+    # Saves your changes while keeping all unedited background cells and original formatting completely intact
+    wb_raw.save(report_file)
+    wb_raw.close()
+    print("Success! All data blocks swapped, formulas stripped, and sources preserved.")
+
+
 
 def Swap_MR():
     print("Swaping MR_Sheet")
@@ -291,7 +303,7 @@ def Copy_All_Data():
 # excution starts here
 ##########################################################################################################
 #dir_path = os.path.dirname(os.path.realpath(__file__)) 
-base_path = Path("F:\\Office\\000Reports\\0000Aug2026\\14082026")
+base_path = Path("E:\\Office\\000Reports\\0000Aug2026\\14082026") #"E:\Office\000Reports\0000Aug2026\14082026\PMAYG-Meeting_03082026_To_10082026_exceLTL.xlsx"
 raw_file_path = "portalData"
 backup_folder = raw_file_path.join("backup_folder")
 base_file = "PMAYG-Meeting_03082026_To_10082026_exceLTL.xlsx"
@@ -334,8 +346,8 @@ for f in file_list_xlsx:
 
 
 #Swap_MR() #Ok
-#Swap_FTO()
-Swap_Daily_Report_Format_1626()
+Swap_FTO()
+Swap_Daily_Report_Format_1626(report_file)
 #Swap_Blockwise_Rank()
 #Swap_MMAYG()
 
