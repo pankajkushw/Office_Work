@@ -184,33 +184,6 @@ def Swap_Daily_Report_Format_1626(report_file):
     print("Success! All data blocks swapped, formulas stripped, and sources preserved.")
 
 
-
-def Swap_MR():
-    print("Swaping MR_Sheet")
-    wb_read = openpyxl.load_workbook(report_file, data_only=True) 
-    wb_write = openpyxl.load_workbook(report_file, data_only=False) 
-    New_sheet = wb_read['4_MR Final']
-    old_sheet = wb_write['4_MR Final']
-    #24-25
-    #copyRange(startCol, startRow, endCol, endRow, sheet)
-    copiedData=copyRange(9, 3, 9, 11, New_sheet)
-    pasteRange(8, 3, 8, 11, old_sheet, copiedData)
-
-    copiedData=copyRange(12, 3, 12, 11, New_sheet)
-    pasteRange(11, 3, 11, 11, old_sheet, copiedData)   
-
-    New_sheet = wb_read['4_MR Final _Daily']
-    old_sheet = wb_write['4_MR Final _Daily']
-    copiedData=copyRange(5, 3, 5, 11, New_sheet)
-    pasteRange(17, 3, 17, 11, old_sheet, copiedData)  
-
-    
-    wb_write.save(report_file)
-    wb_write.close()
-    wb_read.close()
-    print("Swaping MR_Sheet completed.")    
-
-
 ##########################################################################################################
 
 COPY_FILE_list = {"A2_2425":"PhysicalProgressReport_PMAYG_3326_2024-2025",
@@ -302,21 +275,29 @@ def Copy_All_Data():
 
 # excution starts here
 ##########################################################################################################
-#dir_path = os.path.dirname(os.path.realpath(__file__)) 
-base_path = Path("E:\\Office\\000Reports\\0000Aug2026\\14082026") #"E:\Office\000Reports\0000Aug2026\14082026\PMAYG-Meeting_03082026_To_10082026_exceLTL.xlsx"
-raw_file_path = "portalData"
-backup_folder = raw_file_path.join("backup_folder")
+base_path = Path("E:\\Office\\000Reports\\0000Aug2026\\14082026")
+
+# 1. Make 'raw_file_path' and 'backup_folder' use Path logic instead of string logic
+raw_file_path = Path("portalData")
+backup_folder = base_path.joinpath("converted_data") # Joins 'converted_data' to your main directory path
+
 base_file = "PMAYG-Meeting_03082026_To_10082026_exceLTL.xlsx"
 
+# 2. Combine the paths properly using Path objects
 report_file = base_path.joinpath(base_file)
 RAW_FILE = base_path.joinpath(raw_file_path)
 
-print(base_path)
-print("raw" + str(RAW_FILE))
-print(report_file)
+# Print statements to check your work
+print("Excel files folder is at: " + str(backup_folder))
+print("Base path directory:      " + str(base_path))
+print("Raw folder path:          " + str(RAW_FILE))
+print("Target report file:       " + str(report_file))
+
+warnings.simplefilter("ignore")
 
 warnings.simplefilter("ignore")
 file_list_xlsx = list(Path(RAW_FILE).glob("*.xls"))
+print(f"Number of files found: {len(file_list_xlsx)}")
 
 #Converting xls file into xlsx
 for f in file_list_xlsx:
@@ -340,14 +321,14 @@ for f in file_list_xlsx:
     else:
         Path(backup_folder).mkdir(parents=True, exist_ok=True)
         
-    shutil.move(f, RAW_FILE.joinpath("backup_folder"))  # Move the original .xls to a backup folder instead of deleting
+    shutil.move(new_filename, backup_folder)  # Move the original .xls to a backup folder instead of deleting
     #os.remove(f)
-    print(f"Converted and moved: {f}")
+    print(f"Converted and moved: {f}, original file left intact.")
 
 
 #Swap_MR() #Ok
-Swap_FTO()
-Swap_Daily_Report_Format_1626(report_file)
+#Swap_FTO()
+#Swap_Daily_Report_Format_1626(report_file)
 #Swap_Blockwise_Rank()
 #Swap_MMAYG()
 
