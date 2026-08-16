@@ -52,25 +52,6 @@ def pasteRange(startCol, startRow, endCol, endRow, sheetReceiving,copiedData):
         countRow += 1
 
 ##########################################################################################################
-
-def Swap_MMAYG():
-    print("Swaping previous data into backup of MMAYG")
-    wb_read = openpyxl.load_workbook(report_file, data_only=True) 
-    wb_write = openpyxl.load_workbook(report_file, data_only=False) 
-    New_sheet = wb_read['5_MMAY']
-    old_sheet = wb_write['5_MMAY']
-    #copyRange(startCol, startRow, endCol, endRow, sheet)
-    copiedData=copyRange(1, 3, 14, 10, New_sheet)
-    pasteRange(20, 3, 33, 10, old_sheet, copiedData)
-
-    copiedData=copyRange(1, 12, 16, 19, New_sheet)
-    pasteRange(20, 12, 35, 19, old_sheet, copiedData)
-    
-    wb_write.save(report_file)
-    wb_write.close()
-    wb_read.close()
-    print("Swaping previous data into backup of MMAYG. Completed.")
-
 def Swap_FTO():
     print("Swaping previous FTO data into backup")
     wb_read = openpyxl.load_workbook(report_file, data_only=True) 
@@ -103,8 +84,6 @@ def Swap_FTO():
     wb_read.close()
     print("Swaping FTO DATA completed.")
     
-import openpyxl
-
 def Swap_Daily_Report_Format_1626(report_file):
     print("Step 1: Reading values and formulas securely into memory...")
     
@@ -146,6 +125,20 @@ def Swap_Daily_Report_Format_1626(report_file):
     extracted_values['mr_final_col9'] = fetch_data('4_MR Final', 9, 3, 9, 11)
     extracted_values['mr_final_col12'] = fetch_data('4_MR Final', 12, 3, 12, 11)
 
+    # 8. 4_MR Final extractions
+    extracted_values['mmay_row_3'] = fetch_data('5_MMAY', 1, 3, 14, 10)
+    extracted_values['mmay_row_12'] = fetch_data('5_MMAY', 1, 12, 16, 19)
+
+    # 9. FTO Data swap
+    extracted_values['fto_1_2425'] = fetch_data('FTO Report_2426', 7, 7, 8, 13)
+    extracted_values['fto_2_2425'] = fetch_data('FTO Report_2426', 16, 7, 17, 13)
+    extracted_values['fto_3_2425'] = fetch_data('FTO Report_2426', 24, 7, 25, 13)
+    extracted_values['fto_1_2526'] = fetch_data('FTO Report_2426', 7, 29, 8, 35)
+    extracted_values['fto_2_2526'] = fetch_data('FTO Report_2426', 16, 29, 17, 35)
+    extracted_values['fto_3_2526'] = fetch_data('FTO Report_2426', 24, 29, 25, 35)
+    
+
+
     # Close the data instance immediately to release any file hooks
     wb_data.close()
 
@@ -176,6 +169,23 @@ def Swap_Daily_Report_Format_1626(report_file):
     sheet_mr_final_raw = wb_raw['4_MR Final']
     drop_data(sheet_mr_final_raw, extracted_values['mr_final_col9'], d_col=8, d_row=3)
     drop_data(sheet_mr_final_raw, extracted_values['mr_final_col12'], d_col=11, d_row=3)
+
+    # 8. 5_MMAY drops
+    sheet_mmay_raw = wb_raw['5_MMAY']
+    drop_data(sheet_mmay_raw, extracted_values['mmay_row_3'], d_col=20, d_row=3)
+    drop_data(sheet_mmay_raw, extracted_values['mmay_row_12'], d_col=22, d_row=12)
+
+    # 9. FTO Data swap
+    sheet_FTO_raw = wb_raw['FTO Report_2426']
+    drop_data(sheet_FTO_raw, extracted_values['fto_1_2425'], d_col=8, d_row=16)
+    drop_data(sheet_FTO_raw, extracted_values['fto_2_2425'], d_col=16, d_row=16)
+    drop_data(sheet_FTO_raw, extracted_values['fto_3_2425'], d_col=24, d_row=16)
+    drop_data(sheet_FTO_raw, extracted_values['fto_1_2526'], d_col=12, d_row=16)
+    drop_data(sheet_FTO_raw, extracted_values['fto_2_2526'], d_col=20, d_row=16)
+    drop_data(sheet_FTO_raw, extracted_values['fto_3_2526'], d_col=28, d_row=16)
+
+
+
 
     print("Step 3: Saving modifications...")
     # Saves your changes while keeping all unedited background cells and original formatting completely intact
@@ -281,58 +291,65 @@ base_path = Path("E:\\Office\\000Reports\\0000Aug2026\\14082026")
 raw_file_path = Path("portalData")
 backup_folder = base_path.joinpath("converted_data") # Joins 'converted_data' to your main directory path
 
-base_file = "PMAYG-Meeting_03082026_To_10082026_exceLTL.xlsx"
+base_file = "PMAYG-ProgressReport_03082026_To_10082026.xlsx"
 
 # 2. Combine the paths properly using Path objects
 report_file = base_path.joinpath(base_file)
 RAW_FILE = base_path.joinpath(raw_file_path)
 
-# Print statements to check your work
+# 3. Print statements to check your work
 print("Excel files folder is at: " + str(backup_folder))
 print("Base path directory:      " + str(base_path))
 print("Raw folder path:          " + str(RAW_FILE))
 print("Target report file:       " + str(report_file))
 
-warnings.simplefilter("ignore")
 
 warnings.simplefilter("ignore")
 file_list_xlsx = list(Path(RAW_FILE).glob("*.xls"))
-print(f"Number of files found: {len(file_list_xlsx)}")
+backup_file_list_xlsx = list(Path(backup_folder).glob("*.xlsx"))
+print(f"Number of files found to Convert: {len(file_list_xlsx)}")
+print(f"Number of files counverted found: {len(backup_file_list_xlsx)}")
 
-#Converting xls file into xlsx
-for f in file_list_xlsx:
-    print(f"Converting: {f}")
-    
-    # 1. Read the HTML table into a list of DataFrames
-    # [0] gets the first table found in the file
-    data_list = pd.read_html(f)
-    df = data_list[0]
-    
-    # 2. Create the new filename (switching .xls to .xlsx)
-    # Using Path (from pathlib) is cleaner than .replace()
-    new_filename = f.with_suffix('.xlsx') 
-    
-    # 3. Save as a real Excel file
-    df.to_excel(new_filename, index=False)
-    
-    # 4. Remove the old fake .xls file
-    if os.path.isdir(backup_folder):
-        print("folder exist, moving original files")
-    else:
-        Path(backup_folder).mkdir(parents=True, exist_ok=True)
+# 4. Converting files into openpyxl readable if not done already.
+if len(backup_file_list_xlsx) < len(file_list_xlsx):
+    #Converting xls file into xlsx
+    for f in file_list_xlsx:
+        print(f"Converting: {f}")
         
-    shutil.move(new_filename, backup_folder)  # Move the original .xls to a backup folder instead of deleting
-    #os.remove(f)
-    print(f"Converted and moved: {f}, original file left intact.")
+        # 1. Read the HTML table into a list of DataFrames
+        # [0] gets the first table found in the file
+        data_list = pd.read_html(f)
+        df = data_list[0]
+        
+        # 2. Create the new filename (switching .xls to .xlsx)
+        # Using Path (from pathlib) is cleaner than .replace()
+        new_filename = f.with_suffix('.xlsx') 
+        
+        # 3. Save as a real Excel file
+        df.to_excel(new_filename, index=False)
+        
+        # 4. Remove the old fake .xls file
+        if os.path.isdir(backup_folder):
+            print("folder exist, moving original files")
+        else:
+            Path(backup_folder).mkdir(parents=True, exist_ok=True)
 
 
-#Swap_MR() #Ok
-#Swap_FTO()
-#Swap_Daily_Report_Format_1626(report_file)
-#Swap_Blockwise_Rank()
-#Swap_MMAYG()
+        target_backup_file = Path(backup_folder) / f.with_suffix(".xlsx").name
 
- #Copy_All_Data()
+        if target_backup_file.exists():
+            print(f"⏭️ Skipping {f.name} (Already converted and moved)")
+            continue    
+        shutil.move(new_filename, backup_folder)  # Move the original .xls to a backup folder instead of deleting
+        #os.remove(f)
+        print(f"Converted and moved: {f}, original file left intact.")
+else:
+    print("Files already converted, skiping convertion...")
+
+# 5. Swaping data of previous date.
+Swap_Daily_Report_Format_1626(report_file)
+
+
 
 
 
