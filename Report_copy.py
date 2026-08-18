@@ -207,26 +207,33 @@ COPY_FILE_list = {"A2_2425":"PhysicalProgressReport_PMAYG_3326_2024-2025",
                 "F9_1625":"FTOInstallmentWiseReportDetailsNN_ALLPMAYG_0_0_PMAYG_3326_2025-2026",
                 "Awas+_2526":"AwaasPlusPhysicalProgressRprtLogin_District_PMAYG_3326_ALLPMAYG_Cumulative",
                 "MMAYG_Ph":"Block_Wise_Physical_Progress_Reports_(Only_Counts)_*",
-                "MMAYG_FTO":"FTO_Against_Geotag_Report_*"
+                "MMAYG_FTO":"FTO_Against_Geotag_Report_*",
+                "MR1516":"ongo_comp_pds_wrk_rpt_new",
+                "MR1617":"ongo_comp_pds_wrk_rpt_new (1)",
+                "MR1718":"ongo_comp_pds_wrk_rpt_new (2)",
+                "MR1819":"ongo_comp_pds_wrk_rpt_new (3)",
+                "MR1920":"ongo_comp_pds_wrk_rpt_new (4)",
+                "MR2021":"ongo_comp_pds_wrk_rpt_new (5)",
+                "MR2122":"ongo_comp_pds_wrk_rpt_new (6)",
+                "MR2223":"ongo_comp_pds_wrk_rpt_new (7)",
+                "MR2324":"ongo_comp_pds_wrk_rpt_new (8)",
+                "MR2425":"ongo_comp_pds_wrk_rpt_new (9)",
+                "MR2526":"ongo_comp_pds_wrk_rpt_new (10)",
 }
 
 
 def Copy_All_Data():
 
-    xlfiles = list(RAW_FILE.glob("PhysicalProgressReport*3305*2024-2025*.xlsx"))
+    xlfiles = backup_file_list_xlsx
     if len(xlfiles) == 0:
-        print("No files found in the directory: " + str(RAW_FILE))
+        print("No files found in the directory: " + str(backup_file_list_xlsx))
     else:
         for x in xlfiles:
             print(x)
     
         #File to be copied
-        print("starting File copy")
-        #File to be pasted into
-        #template_read = openpyxl.load_workbook(report_file, data_only=True)
-        template_write = openpyxl.load_workbook(report_file, data_only=False)
-        # Copying A2 Files 2024-25
-        temp_sheet = template_write["2024-26 A2"] 
+        print("starting File copy.")
+        sheet_write = openpyxl.load_workbook(report_file, data_only=False)
         
         for files_list in xlfiles:
             wb = openpyxl.load_workbook(files_list, read_only=True) 
@@ -237,68 +244,78 @@ def Copy_All_Data():
             files = Path(files_list).name
             print("Copying: "+ files +" in main excel file")
             match files:
-                #Bhaiyathan 24-25
-                case "PhysicalProgressReport_PMAYG_3305012_2024-2025.xlsx":
-                    print("Copying Bhaiyathan 24-25")
-                    copiedData=copyRange(1, 3, 13, 80, sheet)
-                    pasteRange(31, 2, 43, 79, temp_sheet,copiedData)
+                #24-25
+                case "GapinprogressAccountverifctioncompletion_PMAYG_3326_2024-2025.xlsx":
+                    print("Copying 24-25")
+                    temp_sheet = sheet_write["A4_24-25"] 
+                    copiedData=copyRange(1, 2, 27, 9, sheet)
+                    pasteRange(1, 4, 27, 11, temp_sheet,copiedData)
 
-                #Odgi 24-25
-                case "PhysicalProgressReport_PMAYG_3305013_2024-2025.xlsx":
-                    print("Copying Odgi 24-25")
-                    copiedData=copyRange(1, 3, 13, 76, sheet)
-                    pasteRange(31, 80, 43, 153, temp_sheet,copiedData)
-                    
-                #Pratappur 24-25
-                case "PhysicalProgressReport_PMAYG_3305015_2024-2025.xlsx":
-                    print("Copying Pratappur 24-25")
-                    copiedData=copyRange(1, 3, 13, 104, sheet)
-                    pasteRange(31, 154, 43, 255, temp_sheet,copiedData)
-                    
-                #Premnagar 24-25
-                case "PhysicalProgressReport_PMAYG_3305010_2024-2025.xlsx":
-                    print("Copying Premnagar 24-25")
-                    copiedData=copyRange(1, 3, 13, 49, sheet)
-                    pasteRange(31, 256, 43, 302, temp_sheet,copiedData)
-                    
-                #Ramanujnagar 24-25
-                case "PhysicalProgressReport_PMAYG_3305011_2024-2025.xlsx":
-                    print("Copying Ramanujnagar 24-25")
-                    copiedData=copyRange(1, 3, 13, 76, sheet)
-                    pasteRange(31, 303, 43, 376, temp_sheet,copiedData)
-                    
-                #Surajpur 24-25
-                case "PhysicalProgressReport_PMAYG_3305009_2024-2025.xlsx":
-                    print("Copying Surajpur 24-25")
-                    copiedData=copyRange(1, 3, 13, 110, sheet)
-                    pasteRange(31, 377, 43, 484, temp_sheet,copiedData)
+                case "GapinprogressAccountverifctioncompletion_PMAYG_3326_2025-2026.xlsx":
+                    print("Copying 25-26")
+                    temp_sheet = sheet_write["A4_24-25"] 
+                    copiedData=copyRange(1, 2, 27, 9, sheet)
+                    pasteRange(1, 17, 27, 24, temp_sheet,copiedData)
+
+                # Copying A4 16-26    
+                case "GapinprogressAccountverifctioncompletion_PMAYG_3326_ALLPMAYG.xlsx":
+                    print("Copying 16-26")
+                    temp_sheet = sheet_write["16-26 A4"] 
+                    copiedData=copyRange(1, 2, 27, 9, sheet)
+                    pasteRange(1, 4, 27, 11, temp_sheet,copiedData)
+
+                # Copying F9 24-26
+                case "FTOInstallmentWiseReportDetailsNN_Sanctioned_0_0_PMAYG_3326_2024-2025.xlsx":
+                    print("F9 24-25")
+                    temp_sheet = sheet_write["F9_24-25"] 
+                    copiedData=copyRange(1, 5, 92, 12, sheet)
+                    pasteRange(1, 7, 92, 14, temp_sheet,copiedData)
+
+                case "FTOInstallmentWiseReportDetailsNN_Sanctioned_0_0_PMAYG_3326_2025-2026.xlsx":
+                    print("F9 25-26")
+                    temp_sheet = sheet_write["F9_24-25"]
+                    copiedData=copyRange(1, 5, 92, 12, sheet)
+                    pasteRange(1, 20, 92, 27, temp_sheet,copiedData)
+
+                case "FTOInstallmentWiseReportDetailsNN_ALLPMAYG_0_0_PMAYG_3326_2025-2026.xlsx":
+                    print("F9 25-26")
+                    temp_sheet = sheet_write["16-26 F9"]
+                    copiedData=copyRange(1, 5, 92, 12, sheet)
+                    pasteRange(1, 9, 92, 16, temp_sheet,copiedData)
+
+                case "AwaasPlusPhysicalProgressRprtLogin_District_PMAYG_3326_ALLPMAYG_Cumulative.xlsx":
+                    print("A2_pwl_awas+")
+                    temp_sheet = sheet_write["A2_pwl_awas+"]
+                    copiedData=copyRange(1, 4, 13, 11, sheet)
+                    pasteRange(1, 4, 13, 11, temp_sheet,copiedData)                    
+
                 case _:
                     print("file not matching with any case:" + files)
             wb.close()  
-        print("A2 File saved")
-        template_write.save(report_file)
+        print("File saved")
+        sheet_write.save(report_file)
         mySleepFunction(2)
-        template_write.close()
+        sheet_write.close()
 
         print("All files copied and pasted successfully")
 
 
 # excution starts here
 ##########################################################################################################
-base_path = Path("E:\\Office\\000Reports\\0000Aug2026\\14082026")
+base_path = Path("F:\\Office\\000Reports\\0000Aug2026\\18082026")
 
 # 1. Make 'raw_file_path' and 'backup_folder' use Path logic instead of string logic
 raw_file_path = Path("portalData")
-backup_folder = base_path.joinpath("converted_data") # Joins 'converted_data' to your main directory path
+converted_folder = base_path.joinpath("converted_data") # Joins 'converted_data' to your main directory path
 
-base_file = "PMAYG-ProgressReport_03082026_To_10082026.xlsx"
+base_file = "PMAYG-ProgressReport_10082026_To_18082026.xlsx"
 
 # 2. Combine the paths properly using Path objects
 report_file = base_path.joinpath(base_file)
 RAW_FILE = base_path.joinpath(raw_file_path)
 
 # 3. Print statements to check your work
-print("Excel files folder is at: " + str(backup_folder))
+print("Excel files folder is at: " + str(converted_folder))
 print("Base path directory:      " + str(base_path))
 print("Raw folder path:          " + str(RAW_FILE))
 print("Target report file:       " + str(report_file))
@@ -306,7 +323,7 @@ print("Target report file:       " + str(report_file))
 
 warnings.simplefilter("ignore")
 file_list_xlsx = list(Path(RAW_FILE).glob("*.xls"))
-backup_file_list_xlsx = list(Path(backup_folder).glob("*.xlsx"))
+backup_file_list_xlsx = list(Path(converted_folder).glob("*.xlsx"))
 print(f"Number of files found to Convert: {len(file_list_xlsx)}")
 print(f"Number of files counverted found: {len(backup_file_list_xlsx)}")
 
@@ -347,8 +364,8 @@ else:
     print("Files already converted, skiping convertion...")
 
 # 5. Swaping data of previous date.
-Swap_Daily_Report_Format_1626(report_file)
-
+#Swap_Daily_Report_Format_1626(report_file)
+Copy_All_Data()
 
 
 
