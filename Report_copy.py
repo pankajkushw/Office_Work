@@ -289,8 +289,106 @@ def Copy_All_Data():
                     copiedData=copyRange(1, 4, 13, 11, sheet)
                     pasteRange(1, 4, 13, 11, temp_sheet,copiedData)                    
 
-                case _:
-                    print("file not matching with any case:" + files)
+                # Copying Physical Report of 24-26
+                case "PhysicalProgressReport_PMAYG_3326_2024-2025.xlsx":
+                    print("Copying A2 24-25")
+                    temp_sheet = sheet_write["A2_pwl_awas+"] 
+                    copiedData=copyRange(1, 2, 13, 9, sheet)
+                    pasteRange(1, 28, 13, 35, temp_sheet,copiedData)
+
+                case "PhysicalProgressReport_PMAYG_3326_2025-2026.xlsx":
+                    print("Copying A2 25-26")
+                    temp_sheet = sheet_write["A2_pwl_awas+"] 
+                    copiedData=copyRange(1, 2, 13, 9, sheet)
+                    pasteRange(1, 39, 13, 46, temp_sheet,copiedData)
+
+                case "PhysicalProgressReport_PMAYG_3326_ALLPMAYG.xlsx":
+                    print("Copying A2 24-26")
+                    temp_sheet = sheet_write["16-25-A2"] 
+                    copiedData=copyRange(1, 2, 13, 9, sheet)
+                    pasteRange(1, 3, 13, 10, temp_sheet,copiedData)
+
+                # Gany Report Copy
+                case "FTO_Against_Geotag_Report*.xlsx":
+                    print("MMAY Physical Report Copy")
+                    temp_sheet = sheet_write["A2_pwl_awas+"] 
+                    copiedData=copyRange(1, 2, 10, 7, sheet)
+                    pasteRange(1, 59, 10, 64, temp_sheet,copiedData)
+
+                case "Block_Wise_Physical_Progress_Reports_(Only_Counts)*.xlsx":
+                    print("Copying 25-26")
+                    temp_sheet = sheet_write["A2_pwl_awas+"] 
+                    copiedData=copyRange(1, 2, 16, 7, sheet)
+                    pasteRange(1, 68, 16, 73, temp_sheet,copiedData)
+
+     
+                # Copying MR All Year
+                case "ongo_comp_pds_wrk_rpt_new.xlsx":
+                    print("Copying MR  15-16")
+                    temp_sheet = sheet_write["MRAllYear"] 
+                    copiedData=copyRange(1, 6, 16, 13, sheet)
+                    pasteRange(2, 7, 16, 14, temp_sheet,copiedData)
+
+                case "ongo_comp_pds_wrk_rpt_new (1).xlsx":
+                    print("Copying MR  16-17")
+                    temp_sheet = sheet_write["MRAllYear"] 
+                    copiedData=copyRange(1, 6, 16, 13, sheet)
+                    pasteRange(2, 21, 16, 28, temp_sheet,copiedData)
+
+                case "ongo_comp_pds_wrk_rpt_new (2).xlsx":
+                    print("Copying MR  17-18")
+                    temp_sheet = sheet_write["MRAllYear"] 
+                    copiedData=copyRange(1, 6, 16, 13, sheet)
+                    pasteRange(2, 35, 16, 42, temp_sheet,copiedData)
+
+                case "ongo_comp_pds_wrk_rpt_new (3).xlsx":
+                    print("Copying MR  18-19")
+                    temp_sheet = sheet_write["MRAllYear"] 
+                    copiedData=copyRange(1, 6, 16, 13, sheet)
+                    pasteRange(2, 49, 16, 56, temp_sheet,copiedData)
+
+                case "ongo_comp_pds_wrk_rpt_new (4).xlsx":
+                    print("Copying MR  19-20")
+                    temp_sheet = sheet_write["MRAllYear"] 
+                    copiedData=copyRange(1, 6, 16, 13, sheet)
+                    pasteRange(2, 64, 16, 71, temp_sheet,copiedData)
+
+                case "ongo_comp_pds_wrk_rpt_new (5).xlsx":
+                    print("Copying MR  20-21")
+                    temp_sheet = sheet_write["MRAllYear"] 
+                    copiedData=copyRange(1, 6, 16, 13, sheet)
+                    pasteRange(2, 78, 16, 85, temp_sheet,copiedData)
+
+                case "ongo_comp_pds_wrk_rpt_new (6).xlsx":
+                    print("Copying MR  21-22")
+                    temp_sheet = sheet_write["MRAllYear"] 
+                    copiedData=copyRange(1, 6, 16, 13, sheet)
+                    pasteRange(2, 92, 16, 99, temp_sheet,copiedData)
+
+                case "ongo_comp_pds_wrk_rpt_new (7).xlsx":
+                    print("Copying MR  22-23")
+                    temp_sheet = sheet_write["MRAllYear"] 
+                    copiedData=copyRange(1, 6, 16, 13, sheet)
+                    pasteRange(2, 106, 16, 113, temp_sheet,copiedData)
+
+                case "ongo_comp_pds_wrk_rpt_new (8).xlsx":
+                    print("Copying MR  23-24")
+                    temp_sheet = sheet_write["MRAllYear"] 
+                    copiedData=copyRange(1, 6, 16, 13, sheet)
+                    pasteRange(2, 120, 16, 127, temp_sheet,copiedData)
+
+                case "ongo_comp_pds_wrk_rpt_new (9).xlsx":
+                    print("Copying MR  24-25")
+                    temp_sheet = sheet_write["MRAllYear"] 
+                    copiedData=copyRange(1, 6, 16, 13, sheet)
+                    pasteRange(2, 134, 16, 141, temp_sheet,copiedData)
+
+                case "ongo_comp_pds_wrk_rpt_new (9).xlsx":
+                    print("Copying MR  25-26")
+                    temp_sheet = sheet_write["MRAllYear"] 
+                    copiedData=copyRange(1, 6, 16, 13, sheet)
+                    pasteRange(2, 148, 16, 155, temp_sheet,copiedData)
+        
             wb.close()  
         print("File saved")
         sheet_write.save(report_file)
@@ -302,13 +400,13 @@ def Copy_All_Data():
 
 # excution starts here
 ##########################################################################################################
-base_path = Path("F:\\Office\\000Reports\\0000Aug2026\\18082026")
+base_path = Path("F:\\Office\\000Reports\\0000Aug2026\\19082026")
 
 # 1. Make 'raw_file_path' and 'backup_folder' use Path logic instead of string logic
 raw_file_path = Path("portalData")
 converted_folder = base_path.joinpath("converted_data") # Joins 'converted_data' to your main directory path
 
-base_file = "PMAYG-ProgressReport_10082026_To_18082026.xlsx"
+base_file = "PMAYG-ProgressReport_17082026_To_19082026.xlsx"
 
 # 2. Combine the paths properly using Path objects
 report_file = base_path.joinpath(base_file)
@@ -346,18 +444,18 @@ if len(backup_file_list_xlsx) < len(file_list_xlsx):
         df.to_excel(new_filename, index=False)
         
         # 4. Remove the old fake .xls file
-        if os.path.isdir(backup_folder):
+        if os.path.isdir(converted_folder):
             print("folder exist, moving original files")
         else:
-            Path(backup_folder).mkdir(parents=True, exist_ok=True)
+            Path(converted_folder).mkdir(parents=True, exist_ok=True)
 
 
-        target_backup_file = Path(backup_folder) / f.with_suffix(".xlsx").name
+        target_backup_file = Path(converted_folder) / f.with_suffix(".xlsx").name
 
         if target_backup_file.exists():
             print(f"⏭️ Skipping {f.name} (Already converted and moved)")
             continue    
-        shutil.move(new_filename, backup_folder)  # Move the original .xls to a backup folder instead of deleting
+        shutil.move(new_filename, converted_folder)  # Move the original .xls to a backup folder instead of deleting
         #os.remove(f)
         print(f"Converted and moved: {f}, original file left intact.")
 else:
