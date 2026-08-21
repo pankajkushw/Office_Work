@@ -27,7 +27,6 @@ FY_file_link = {"2015-16":"https://mnregaweb4.nic.in/netnrega/ongo_comp_pds_wrk_
                 
 }
     #"2026-27":"https://mnregaweb4.dord.gov.in/netnrega/ongo_comp_pds_wrk_rpt_new.aspx?page=D&short_name=&state_name=CHHATTISGARH&state_code=33&district_name=SURAJPUR&district_code=3326&fin_year=2026-2027&source=national&rbl1=0&rbl2=0&Digest=GHaoif+8dHG7sw0ZLznChA"
-
 driver = webdriver.Chrome()
 os.environ["OMP_THREAD_LIMIT"] = "1"
 for link in FY_file_link:

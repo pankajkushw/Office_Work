@@ -13,13 +13,13 @@ import cv2
 import requests
 import threading
 
-w_FY_type = ["2016-2017", "2017-2018", "2018-2019", "2019-2020", "2020-2021", "2022-2023", "2024-2025", "2025-2026"]
+w_FY_type = ["2016-2017", "2017-2018","2018-2019", "2019-2020", "2020-2021", "2022-2023", "2024-2025", "2025-2026"] 
 FY_type = ["2024-2025", "2025-2026", "PMAYG Cumulative progress till date" ]
 w_Scheme_type = ["PMAYG"]
 Scheme_type = ["PRADHAN MANTRI AWAAS YOJANA GRAMIN"]
 State_type = ["CHHATTISGARH"]
 District_type = ["SURAJPUR"]
-block_type = ["ODAGI", "PRATAPPUR", "PREMNAGAR", "RAMANUJNAGAR", "SURAJPUR"] #"BHAIYATHAN",
+block_type = ["BHAIYATHAN", "ODAGI", "PRATAPPUR", "PREMNAGAR", "RAMANUJNAGAR", "SURAJPUR"] #"BHAIYATHAN",
 data_type = ["Sanctioned Year"]
 Panchayat_type = ["All"]
 Category_type = ["All"]
@@ -207,10 +207,10 @@ def wait_for_download_complete(download_dir, timeout=300):
         time.sleep(1) # Check again every 1 second
 
 def WorkinProgress_Report():
-    #w_FY_type = ["2016-2017", "2017-2018", "2018-2019", "2019-2020", "2020-2021", "2022-2023", "2025-2026"]
-    #w_FY_type = ["2022-2023", "2025-2026"]
+    #w_FY_type = ["2018-2019", "2019-2020", "2020-2021", "2022-2023", "2025-2026"] #"2016-2017", "2017-2018", 
+    w_FY_type = ["2025-2026", "2024-2025"]
     #Manual intervention required for clicking download button due to timeout issues.
-    w_FY_type = ["2024-2025"]
+    #w_FY_type = ["2024-2025"]
     print("Navigating to Work in Progress Report...")
     mySleepFunction(WAIT_SECONDS)
     # Selcting A2 Report
