@@ -33,7 +33,7 @@ driver.page_load_strategy = 'eager'
 
 WAIT_SECONDS = 5
 USER_ID = "CH26"
-PASSWORD = "Dspr@202627"
+PASSWORD = "Dspr@2026278"
 FY = "2025-2026"    
 driver.implicitly_wait(10) 
 def mySleepFunction(seconds):
