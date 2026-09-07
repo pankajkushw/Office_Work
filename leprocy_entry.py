@@ -167,9 +167,10 @@ def login():
         print("Successfully clicked 'Continue'.")
 
         # Replace this list with your actual target Ration Card numbers
-        ration_cards = ['226480280830', '226480290205', '226480534626', '226480616422']
-
+        ration_cards = ['226489807035','226489742367']
+        round_complete = False
         for card_number in ration_cards:
+            
             print(f"Executing sequence for card entry: {card_number}")
             try:
                 # Targets the input field directly associated with the ID card icon,
@@ -200,6 +201,7 @@ def login():
                 )
                 
                 # 2. Wait until the button is present in the DOM layout
+
                 search_btn = wait.until(EC.presence_of_element_located((By.XPATH, search_btn_xpath)))
                 
                 # 3. Clean click execution strategy
@@ -233,8 +235,8 @@ def login():
                             date_input = wait.until(EC.presence_of_element_located((By.XPATH, "//input[contains(@placeholder, 'Visit Date')] | //mat-form-field[contains(., 'Visit Date')]//input")))
                             driver.execute_script("arguments[0].value = arguments[1];", date_input, target_date)
                             # Trigger standard input/change events so Angular detects the value update
-                            driver.execute_script("arguments[0].dispatchEvent(new Event('input', { bubbles: True }));", date_input)
-                            driver.execute_script("arguments[0].dispatchEvent(new Event('change', { bubbles: True }));", date_input)
+                            driver.execute_script("arguments[0].dispatchEvent(new Event('input', { bubbles: true }));", date_input)
+                            #driver.execute_script("arguments[0].dispatchEvent(new Event('change', { bubbles: True }));", date_input)
                             print(f"Set planned visit date to: {target_date}")
 
                             # 3. Open Village Dropdown Panel
@@ -249,6 +251,37 @@ def login():
 
                             # 1. Broadly target the search button card using text and style classes
                             search_btn_xpath = (
+                                "//button[@type='submit' or contains(., 'Continue')]"
+                                " | //mat-form-field//following::button[contains(., 'Continue')]"
+                                " | //span[contains(text(), 'Continue')]/ancestor::button"
+                                " | //button[contains(@class, 'mat-focus-indicator') and contains(., 'Continue')]"
+                            )
+                            
+                            # 2. Wait until the button is present in the DOM layout
+                            search_btn = wait.until(EC.presence_of_element_located((By.XPATH, search_btn_xpath)))
+                            
+                            # Try a standard driver click first to allow Angular event bubbles to fire naturally
+                            search_btn.click()
+
+                            input_xpath = (
+                                "//input[@type='text' and not(ancestor::mat-form-field[.//mat-datepicker-toggle]) and not(contains(@placeholder, 'Date'))]"
+                                " | //mat-label[contains(., 'Card') or contains(., 'ABHA')]/ancestor::mat-form-field//input"
+                                " | (//mat-form-field//input)[last()]"
+                            )
+                            
+                            # Wait until the true search input field is present
+                            search_field = wait.until(EC.presence_of_element_located((By.XPATH, input_xpath)))
+                            
+                            # Inject values directly using JavaScript to prevent calendar overlays from popping up
+                            # Inject values directly into the input using the proper indexed arguments
+                            driver.execute_script("arguments[0].value = arguments[1];", search_field, card_number)
+                            driver.execute_script("arguments[0].dispatchEvent(new Event('input', { bubbles: true }));", search_field)
+                            driver.execute_script("arguments[0].dispatchEvent(new Event('change', { bubbles: true }));", search_field)
+
+                            print("Card number successfully injected into the correct Search box.")
+                            
+                            # 1. Broadly target the search button card using text and style classes
+                            search_btn_xpath = (
                                 "//button[@type='submit' or contains(., 'Search')]"
                                 " | //mat-form-field//following::button[contains(., 'Search')]"
                                 " | //span[contains(text(), 'Search')]/ancestor::button"
@@ -256,12 +289,16 @@ def login():
                             )
                             
                             # 2. Wait until the button is present in the DOM layout
+
                             search_btn = wait.until(EC.presence_of_element_located((By.XPATH, search_btn_xpath)))
                             
                             # 3. Clean click execution strategy
 
                             # Try a standard driver click first to allow Angular event bubbles to fire naturally
                             search_btn.click()
+                            print("Standard browser search button click executed.")
+
+
 
 
                         # Re-fetch the elements inside the loop to ensure they are fresh
@@ -276,8 +313,6 @@ def login():
                         
                         # Use a reliable JavaScript click to bypass overlapping Angular components or overlay layers
                         driver.execute_script("arguments[0].click();", current_button)
-                        
-                            # Adjust this sleep duration based on how long your application takes to process a click
 
                         # Initialize the flag tracker at the start of each loop iteration
                         screening_already_done = False
@@ -285,7 +320,7 @@ def login():
                         try:
                             # 1. Target the explicit SweetAlert container that is open on your screen
                             print("Checking for active SweetAlert warning layout...")
-                            swal_modal = WebDriverWait(driver, 5).until(
+                            swal_modal = WebDriverWait(driver, 10).until( # from 5 to 10
                                 EC.presence_of_element_located((By.CLASS_NAME, "swal2-modal"))
                             )
                             
@@ -303,7 +338,7 @@ def login():
                                 print("SweetAlert 'OK' button successfully clicked.")
                                 
                                 # 4. Wait for the SweetAlert dark backdrop container to leave the DOM hierarchy entirely
-                                WebDriverWait(driver, 5).until(
+                                WebDriverWait(driver, 10).until( # from 5 to 10
                                     EC.invisibility_of_element_located((By.CLASS_NAME, "swal2-container"))
                                 )
                                 # 4. Wait for the SweetAlert dark backdrop container to leave the DOM hierarchy entirely
@@ -350,7 +385,7 @@ def login():
                                 select_xpath = f"//mat-select[contains(normalize-space(.), '{dropdown_label}')] | //div[contains(normalize-space(.), '{dropdown_label}')]//mat-select"
                                 
                                 # यदि element दिखाई देता है, तो इसे variable में स्टोर करें
-                                is_visible = WebDriverWait(driver, 3).until(
+                                is_visible = WebDriverWait(driver, 10).until( #from 3 to 10
                                     EC.presence_of_element_located((By.XPATH, select_xpath))
                                 )
                                 
