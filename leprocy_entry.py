@@ -7,6 +7,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.service import Service
 import time, os
 from selenium.webdriver.common.action_chains import ActionChains
+from selenium.webdriver.common.keys import Keys
 
 
 
@@ -14,6 +15,9 @@ from selenium.webdriver.common.action_chains import ActionChains
 options = webdriver.ChromeOptions()
 options.add_argument("--use-fake-ui-for-media-stream")
 options.add_argument("--use-fake-device-for-media-stream")
+
+
+
 driver = webdriver.Chrome(options=options)
 driver.get("https://govthealth.cg.gov.in/uhsmis/#/auth")
 
@@ -163,7 +167,7 @@ def login():
         print("Successfully clicked 'Continue'.")
 
         # Replace this list with your actual target Ration Card numbers
-        ration_cards = ['226489928354', '226489993637']
+        ration_cards = ['226480280830', '226480290205', '226480534626', '226480616422']
 
         for card_number in ration_cards:
             print(f"Executing sequence for card entry: {card_number}")
@@ -215,19 +219,50 @@ def login():
 
                 print(f"Found {total_buttons} matching 'Select' buttons.")
                 counter = 0
+                target_date = "01-09-2026"
                 for i in range(total_buttons):
 
                     try:
                         #Second time date of visit, village has to be set and search again
-                        counter = counter + 1
-                        #if counter > 0:
+                        if counter > 0:
+                            # 1. Wait for global Angular loader to disappear completely
+                            wait.until(EC.invisibility_of_element_located((By.TAG_NAME, "app-loader")))
 
+                            # 2. Input Planned Visit Date via JavaScript execution
+                            # (This bypasses click interceptions if the read-only or overlay blocks standard input typing)
+                            date_input = wait.until(EC.presence_of_element_located((By.XPATH, "//input[contains(@placeholder, 'Visit Date')] | //mat-form-field[contains(., 'Visit Date')]//input")))
+                            driver.execute_script("arguments[0].value = arguments[1];", date_input, target_date)
+                            # Trigger standard input/change events so Angular detects the value update
+                            driver.execute_script("arguments[0].dispatchEvent(new Event('input', { bubbles: True }));", date_input)
+                            driver.execute_script("arguments[0].dispatchEvent(new Event('change', { bubbles: True }));", date_input)
+                            print(f"Set planned visit date to: {target_date}")
 
+                            # 3. Open Village Dropdown Panel
+                            village_dropdown = wait.until(EC.element_to_be_clickable((By.XPATH, "//mat-select | //mat-form-field[contains(., 'Village')]//mat-select")))
+                            village_dropdown.click()
 
+                            # 4. Handle Option Selection using your expanded XPATH pattern with case-insensitive matching
+                            option_xpath = f"//mat-option[contains(translate(., 'KARAMPUR', 'karampur'), '{target_village.lower()}')] | //mat-option//span[contains(translate(text(), 'KARAMPUR', 'karampur'), '{target_village.lower()}')]"
+                            option = wait.until(EC.element_to_be_clickable((By.XPATH, option_xpath)))
+                            option.click()
+                            print(f"Selected village: {target_village}")
 
-
+                            # 1. Broadly target the search button card using text and style classes
+                            search_btn_xpath = (
+                                "//button[@type='submit' or contains(., 'Search')]"
+                                " | //mat-form-field//following::button[contains(., 'Search')]"
+                                " | //span[contains(text(), 'Search')]/ancestor::button"
+                                " | //button[contains(@class, 'mat-focus-indicator') and contains(., 'Search')]"
+                            )
                             
+                            # 2. Wait until the button is present in the DOM layout
+                            search_btn = wait.until(EC.presence_of_element_located((By.XPATH, search_btn_xpath)))
                             
+                            # 3. Clean click execution strategy
+
+                            # Try a standard driver click first to allow Angular event bubbles to fire naturally
+                            search_btn.click()
+
 
                         # Re-fetch the elements inside the loop to ensure they are fresh
                         buttons = driver.find_elements(By.CSS_SELECTOR, "button.action-btn")
@@ -267,13 +302,13 @@ def login():
                                 driver.execute_script("arguments[0].click();", ok_btn)
                                 print("SweetAlert 'OK' button successfully clicked.")
                                 
-                                # # 4. Wait for the SweetAlert dark backdrop container to leave the DOM hierarchy entirely
-                                # WebDriverWait(driver, 5).until(
-                                #     EC.invisibility_of_element_located((By.CLASS_NAME, "swal2-container"))
-                                # )
                                 # 4. Wait for the SweetAlert dark backdrop container to leave the DOM hierarchy entirely
-                                swal_container = driver.find_element(By.CLASS_NAME, "swal2-container")
-                                WebDriverWait(driver, 5).until(EC.staleness_of(swal_container))
+                                WebDriverWait(driver, 5).until(
+                                    EC.invisibility_of_element_located((By.CLASS_NAME, "swal2-container"))
+                                )
+                                # 4. Wait for the SweetAlert dark backdrop container to leave the DOM hierarchy entirely
+                                # swal_container = driver.find_element(By.CLASS_NAME, "swal2-container")
+                                # WebDriverWait(driver, 5).until(EC.staleness_of(swal_container))
 
                                 print("Modal faded out. Workspace cleared.")
                                 
@@ -399,21 +434,21 @@ def login():
                                 print("Success popup 'OK' button forcefully clicked via Actions API.")
 
                             # 3. Synchronize thread layout: Wait for the SweetAlert backdrop container to leave the view entirely
-                            wait.until(EC.invisibility_of_element_located((By.CLASS_NAME, "swal2-container")))
-                            print("Success modal cleared. Main form view is ready for the next iteration.")
+                            # wait.until(EC.invisibility_of_element_located((By.CLASS_NAME, "swal2-container")))
+                            # print("Success modal cleared. Main form view is ready for the next iteration.")
 
 
 
 
                             print("Form population completed successfully.")
+                            if i <= total_buttons:
+                                counter = counter + 1
+                                continue
 
                         except Exception as e: # inner exception of option No, No, & photo upload
                             print(f"An error occurred during automation: {e}")
 
-                        finally:
-                            # Keep the browser open for manual verification
-                            input("Press Enter to close the browser...")
-                            continue
+                       
 
 
 #####################################
