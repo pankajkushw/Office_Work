@@ -5,7 +5,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import Select, WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.service import Service
-import time, os
+import time, os, logging
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.keys import Keys
 
@@ -27,12 +27,22 @@ wait = WebDriverWait(driver, 10)
 
 CHC = "CHC BISHRAMPUR"
 NAME = "Heenam Kushwaha"
+target_village = "Karampur"
+target_date = "01-09-2026"
 driver.implicitly_wait(10) 
 def mySleepFunction(seconds):
     for i in range(seconds):
         print(f"Waiting... {seconds - i} seconds remaining", end="\r")
         time.sleep(1)# Define an explicit wait timeout
 wait = WebDriverWait(driver, 10)
+
+# Configure the logging system
+logging.basicConfig(
+    filename='app.log',         # Name of the log file
+    filemode='a',              # 'a' to append logs, 'w' to overwrite each run
+    format='%(asctime)s - %(levelname)s - %(message)s', # Log structure
+    level=logging.INFO         # Capture INFO level messages and above
+)
 
 def select_angular_dropdown(placeholder_text, option_text):
     """
@@ -49,7 +59,72 @@ def select_angular_dropdown(placeholder_text, option_text):
     option = wait.until(EC.element_to_be_clickable((By.XPATH, option_xpath)))
     option.click()
 
+def check_date_and_village_set():
+    # Define target values
+    # 1. Locate the form fields
+    # Date container element mapping to the mat-form-field
+    date_field = driver.find_element(By.XPATH, "//mat-form-field[contains(., 'Select Planned Visit Date')]")
+    # Village container element mapping to the mat-form-field
+    village_field = driver.find_element(By.XPATH, "//mat-form-field[contains(., 'Select Village')]")
+
+    # 2. Extract class attributes to verify the "ng-invalid" validation status (red highlight indicator)
+    date_classes = date_field.get_attribute("class")
+    village_classes = village_field.get_attribute("class")
+
+    # Check if both fields contain the Angular invalid class marker
+    if "ng-invalid" in date_classes and "ng-invalid" in village_classes:
+        print("Both fields are highlighted in red (invalid status). Injecting target data...")
+        # 1. Wait for global Angular loader to disappear completely
+        wait.until(EC.invisibility_of_element_located((By.TAG_NAME, "app-loader")))
+        
+        # 2. Input Planned Visit Date via JavaScript execution
+        # (This bypasses click interceptions if the read-only or overlay blocks standard input typing)
+        date_input = wait.until(EC.presence_of_element_located((By.XPATH, "//input[contains(@placeholder, 'Visit Date')] | //mat-form-field[contains(., 'Visit Date')]//input")))
+        driver.execute_script("arguments[0].value = arguments[1];", date_input, target_date)
+        # Trigger standard input/change events so Angular detects the value update
+        driver.execute_script("arguments[0].dispatchEvent(new Event('input', { bubbles: true }));", date_input)
+        #driver.execute_script("arguments[0].dispatchEvent(new Event('change', { bubbles: True }));", date_input)
+        print(f"Set planned visit date to: {target_date}")
+
+        # 3. Open Village Dropdown Panel
+        village_dropdown = wait.until(EC.element_to_be_clickable((By.XPATH, "//mat-select | //mat-form-field[contains(., 'Village')]//mat-select")))
+        village_dropdown.click()
+
+        # 4. Handle Option Selection using your expanded XPATH pattern with case-insensitive matching
+        option_xpath = f"//mat-option[contains(translate(., 'KARAMPUR', 'karampur'), '{target_village.lower()}')] | //mat-option//span[contains(translate(text(), 'KARAMPUR', 'karampur'), '{target_village.lower()}')]"
+        option = wait.until(EC.element_to_be_clickable((By.XPATH, option_xpath)))
+        option.click()
+        print(f"Selected village: {target_village}")
+
+        # 1. Broadly target the search button card using text and style classes
+        search_btn_xpath = (
+            "//button[@type='submit' or contains(., 'Continue')]"
+            " | //mat-form-field//following::button[contains(., 'Continue')]"
+            " | //span[contains(text(), 'Continue')]/ancestor::button"
+            " | //button[contains(@class, 'mat-focus-indicator') and contains(., 'Continue')]"
+        )
+        
+        # 2. Wait until the button is present in the DOM layout
+        search_btn = wait.until(EC.presence_of_element_located((By.XPATH, search_btn_xpath)))
+        
+        # Try a standard driver click first to allow Angular event bubbles to fire naturally
+        search_btn.click()
+        print("Invalidated, setting again.")
+
+    else:
+        print("One or both fields do not show a validation error layout.")
+        return False
+
+
 def login():
+    # Check if the root logger has any handlers configured
+    if not logging.root.handlers:
+    # Call basicConfig to add a console handler with a pre-defined format
+        logging.basicConfig(
+            format='%(asctime)s - %(levelname)s - %(message)s',
+            level=logging.INFO
+        )
+
     try:
         # Step 1: Select District (Replace 'Raipur' with your actual district value)
         select_angular_dropdown("Select District", "SURAJPUR  (सूरजपुर )")
@@ -167,11 +242,12 @@ def login():
         print("Successfully clicked 'Continue'.")
 
         # Replace this list with your actual target Ration Card numbers
-        ration_cards = ['226489807035','226489742367']
+        ration_cards = ['226487919888', '226487923313', '226487932918', '226487978667', '226488066768', '226488100552', '226488192724', '226488206098', '226488212849', '226488267470', '226488278049', '226488363287', '226488466477', '226488522164', '226488524446', '226488530628', '226488531971', '226488536337', '226488553581', '226488571491', '226488599210', '226488605255', '226488627867', '226488638425', '226488667057', '226488683672', '226488686448', '226488704366', '226488757370', '226488796887', '226488907313', '226488983851', '226489036405', '226489055671', '226489069015', '226489090524', '226489176840', '226489180457', '226489197725', '226489218964', '226489253499', '226489254753', '226489417513', '226489529321', '226489539898', '226489561982', '226489564289', '226489584256', '226489586112', '226489646226', '226489679133', '226489702521', '226489736524', '226489776416', '226489795683', '226489826479', '226489878451', '226489903241', '226489917157', '226489984089', '226481031582', '226481086311', '226481246697', '226481287369', '226481295091', '226481329177', '226481370727', '226481445235', '226481475437', '226481490056', '226481498137', '226481538910', '226481568664', '226481731382', '226481767777', '226481783742', '226481816740', '226481914283', '226481931836', '226482100875', '226482205405', '226482214647', '226482219572', '226482331544', '226482465109', '226482473179', '226482486773', '226482597161', '226482597425', '226482648129', '226482662478', '226482714442', '226482748625', '226482834104', '226482918139', '226483056531', '226483111689', '226483187660', '226483197585', '226483346894', '226483360580', '226483400789', '226483585926', '226483646792', '226483652305', '226483661577', '226483783307', '226483976844', '226484272146', '226484319895', '226484355015', '226484394012', '226484530730', '226484597586', '226484643774', '226484663169', '226484776610', '22648482055', '226485316537', '226485593171', '226485593536', '226485632613', '226485706648', '226485732124', '226485747657', '226485821857', '226485851903', '226485879336', '226485991440', '226486053393', '226486077050', '226486162149', '226486247960', '226486260561', '226486261393', '226486397072', '226486515964', '226486535743', '226486580336', '226486632946', '226486668463', '226486799132', '226486849531', '226486853603', '226486873055', '226486938586', '226486943358', '226487015741', '226487080693', '226487102828', '226487197251', '226487202125', '226487253122', '226487256814', '226487388396', '226487447259', '226487591416', '226487626974', '226487650645', '226487666863', '226487678954', '226487742085', '226487762811', '226487805756', '226487864158', '226487893332', '226487990250', '226488039906', '226488053587', '226488085912', '226488093473', '226488106469', '226488122234', '226488123151', '226488266071', '226488311893', '226488425215', '226488549478', '226488613216', '226488617835', '226488658989', '226488752364', '226488772008', '226489043496', '226489082771', '226489316989', '226489395447', '226489512586', '226489616105', '226489710028', '226489742367', '226489807035', '226489843278', '226489871259', '226489919266', '226489928354', '226489993637', '226489452114']
         round_complete = False
         for card_number in ration_cards:
-            
+            check_date_and_village_set()
             print(f"Executing sequence for card entry: {card_number}")
+            logging.info(f"Opening:  {card_number}")
             try:
                 # Targets the input field directly associated with the ID card icon,
                 # explicitly avoiding any date picker fields containing calendar icons.
@@ -213,13 +289,21 @@ def login():
                 #Screening Logic will go here$$$$$$$$$$$$$$$$$$$$$$$$$$$$
                 # Find all active "Select" buttons in the table
                 # This uses a partial text match or exact match on the text inside the button/link
-                wait.until(EC.presence_of_element_located((By.CLASS_NAME, "custom-table")))
 
-                # Target the buttons precisely using the class name 'action-btn' shown in your HTML
-                select_buttons = driver.find_elements(By.CSS_SELECTOR, "button.action-btn")
-                total_buttons = len(select_buttons)
+                identification_header = driver.find_elements(By.XPATH, "//*[contains(text(), 'Identification Details')]")
+                if len(identification_header) > 0:
+                    print(f"Identification Details section is already visible on the screen. Skipping table action loops: {card_number}")
+                    logging.info("Bypassed select buttons loop because Identification Details container is active.")
+                    continue
+                else:
+                    wait.until(EC.presence_of_element_located((By.CLASS_NAME, "custom-table")))
+                    # Target the buttons precisely using the class name 'action-btn' shown in your HTML
+                    select_buttons = driver.find_elements(By.CSS_SELECTOR, "button.action-btn")
+                    total_buttons = len(select_buttons)
 
-                print(f"Found {total_buttons} matching 'Select' buttons.")
+                    print(f"Found {total_buttons} matching 'Select' buttons.")
+                    logging.info(f"Member in :  {card_number} : {total_buttons}")
+
                 counter = 0
                 target_date = "01-09-2026"
                 for i in range(total_buttons):
@@ -320,7 +404,7 @@ def login():
                         try:
                             # 1. Target the explicit SweetAlert container that is open on your screen
                             print("Checking for active SweetAlert warning layout...")
-                            swal_modal = WebDriverWait(driver, 10).until( # from 5 to 10
+                            swal_modal = WebDriverWait(driver, 5).until( # from 5 to 10
                                 EC.presence_of_element_located((By.CLASS_NAME, "swal2-modal"))
                             )
                             
@@ -338,7 +422,7 @@ def login():
                                 print("SweetAlert 'OK' button successfully clicked.")
                                 
                                 # 4. Wait for the SweetAlert dark backdrop container to leave the DOM hierarchy entirely
-                                WebDriverWait(driver, 10).until( # from 5 to 10
+                                WebDriverWait(driver, 5).until( # from 5 to 10
                                     EC.invisibility_of_element_located((By.CLASS_NAME, "swal2-container"))
                                 )
                                 # 4. Wait for the SweetAlert dark backdrop container to leave the DOM hierarchy entirely
@@ -357,6 +441,7 @@ def login():
                         # --- THE CRITICAL CONDITIONAL SKIP ---
                         if screening_already_done:
                             print("Skipping remaining form fields. Routing directly back to the next loop iteration...\n")
+                            logging.info(f"screening already done for {ration_cards}: {i}")
                             continue  # Breaks the current execution string and pulls the next record smoothly
 
                         # --- REST OF FORM SUBMISSION ROUTINE CONTINUES BELOW ---
@@ -365,6 +450,7 @@ def login():
                         time.sleep(2) 
                         #####################################
                         try:
+                            logging.info(f"screening for {ration_cards}: {i}")
                             # ----------------------------------------------------
                             # 1. Select "No" in the "Belongs to PVTG Category" Dropdown
                             # ----------------------------------------------------
@@ -385,7 +471,7 @@ def login():
                                 select_xpath = f"//mat-select[contains(normalize-space(.), '{dropdown_label}')] | //div[contains(normalize-space(.), '{dropdown_label}')]//mat-select"
                                 
                                 # यदि element दिखाई देता है, तो इसे variable में स्टोर करें
-                                is_visible = WebDriverWait(driver, 10).until( #from 3 to 10
+                                is_visible = WebDriverWait(driver, 5).until( #from 3 to 10
                                     EC.presence_of_element_located((By.XPATH, select_xpath))
                                 )
                                 
@@ -476,7 +562,7 @@ def login():
 
 
                             print("Form population completed successfully.")
-                            if i <= total_buttons:
+                            if i < total_buttons:
                                 counter = counter + 1
                                 continue
 
@@ -501,9 +587,8 @@ def login():
                 #Screening Logic will go here$$$$$$$$$$$$$$$$$$$$$$$$$$$$                
 
             except Exception as e: # exception of ration card for loop
-                import traceback
                 print(f"Pipeline crashed for card: {card_number}")
-                print(traceback.format_exc())
+                
 
     except Exception as e: # exception of login function
         print(f"An error occurred while filling the form: {e}")
