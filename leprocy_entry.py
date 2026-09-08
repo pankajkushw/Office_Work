@@ -116,6 +116,108 @@ def check_date_and_village_set():
         return False
 
 
+
+def for_single():
+    select_angular_dropdown("Belongs to PVTG Category", "No")
+    time.sleep(0.5)
+    
+    # Wait for the option list overlay to appear and click "No"
+    select_angular_dropdown("Suspected", "No")
+    
+    # Small pause to let the overlay close cleanly
+    time.sleep(0.5)
+
+    #select_angular_dropdown("गर्भवती / स्तनपान कराने वाली", "No")
+    try:
+        # 1. 3 सेकंड का एक छोटा वेट लगाएँ ताकि चेक किया जा सके कि dropdown स्क्रीन पर मौजूद है या नहीं
+        dropdown_label = "गर्भवती / स्तनपान कराने वाली"
+        select_xpath = f"//mat-select[contains(normalize-space(.), '{dropdown_label}')] | //div[contains(normalize-space(.), '{dropdown_label}')]//mat-select"
+        
+        # यदि element दिखाई देता है, तो इसे variable में स्टोर करें
+        is_visible = WebDriverWait(driver, 5).until( #from 3 to 10
+            EC.presence_of_element_located((By.XPATH, select_xpath))
+        )
+        
+        # 2. केवल element मिलने पर ही फ़ंक्शन को कॉल करें
+        select_angular_dropdown("गर्भवती / स्तनपान कराने वाली", "No")
+        print("गर्भवती / स्तनपान कराने वाली dropdown सफलतापूर्वक सेट कर दिया गया है।")
+
+    except Exception:
+        # अगर element 3 सेकंड में नहीं मिलता, तो script बिना क्रैश हुए इसे छोड़ देगी
+        print("गर्भवती / स्तनपान कराने वाली dropdown स्क्रीन पर दिखाई नहीं दिया। आगे बढ़ रहे हैं...")
+
+    
+    time.sleep(0.5)
+
+    # ----------------------------------------------------
+    # 3. Tick the Consent Checkbox
+    # ----------------------------------------------------
+    # Target the inner invisible input or the mat-checkbox label component
+    # 1. Locate the checkbox element safely using dynamic layout variations
+    checkbox = wait.until(EC.presence_of_element_located((
+        By.XPATH, "//mat-checkbox//input[@type='checkbox'] | //mat-checkbox | //input[@type='checkbox']"
+    )))
+
+    # 2. Scroll to the element to make sure it is in view
+    driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", checkbox)
+
+    # 3. Force the click event via JavaScript to avoid element click intercepted errors
+    driver.execute_script("arguments[0].click();", checkbox)
+
+    # ----------------------------------------------------
+    # 4. Upload a Dummy Picture
+    # ----------------------------------------------------
+    # --- 1. File Upload Phase ---
+    dummy_image_path = os.path.abspath("temp_placeholder.jpg")
+    if not os.path.exists(dummy_image_path):
+        with open(dummy_image_path, "wb") as f:
+            f.write(b"\xFF\xD8\xFF\xE0\x00\x10JFIF\x00\x01\x01\x01\x00`\x00`\x00\x00\xFF\xDB\x00C\x00\x08\x06\x06\x07\x06\x05\x08\x07\x07\x07\t\t\x08\n\x0C\x14\r\x0C\x0B\x0B\x0C\x19\x12\x13\x0F\x14\x1D\x1A\x1F\x1E\x1D\x1A\x1C\x1C $.' \",#\x1C\x1C(7),01444\x1F'9=82<.342\xFF\xC0\x00\x0B\x08\x00\x01\x00\x01\x01\x01\x11\x01\xFF\xC4\x00\x15\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xDA\x00\x0C\x01\x01\x00\x00\x3F\x00\xB2\xC0\xFF\xD9")
+
+    # Target the hidden browser file channel input directly
+    photo_input = driver.find_element(By.XPATH, "//input[@type='file']")
+    photo_input.send_keys(dummy_image_path)
+    print("Placeholder photo successfully routed to file stream.")
+
+    # --- 2. Corrected Synchronization Wait ---
+    # Use the global 'wait' object instance to keep timeout metrics uniform.
+    # This explicitly waits for the image rendering preview frame to appear in the container layout.
+    wait.until(EC.presence_of_element_located((
+        By.XPATH, "//div[contains(@class, 'image')]//img | //img[not(@id) and @src] | //*[contains(@class, 'preview')]"
+    )))
+    print("Form validation refreshed: Photo preview detected.")
+
+    # --- 3. Click Execution ---
+    submit_btn = wait.until(EC.presence_of_element_located((
+        By.XPATH, "//button[contains(normalize-space(.), 'Submit Leprosy Report')]"
+    )))
+    driver.execute_script("arguments[0].click();", submit_btn)
+    print("Form submission executed successfully.")
+
+
+    # 1. Explicitly wait until the SweetAlert confirm button is interactive on the screen viewport
+    yes_save_btn = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, "button.swal2-confirm")))
+    
+    # 2. Execute the click using JavaScript to guarantee execution through the backdrop fade overlay
+    driver.execute_script("arguments[0].click();", yes_save_btn)
+    print("Confirmation modal 'Yes, Save' button successfully clicked.")
+
+
+    try:
+        # 1. Target the button via its unique SweetAlert confirmation class
+        success_ok_btn = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, "button.swal2-confirm")))
+        
+        # 2. Fix: Corrected syntax using arguments[0] to run the native browser click track
+        driver.execute_script("arguments[0].click();", success_ok_btn)
+        print("Success popup 'OK' button clicked via corrected JS call.")
+        
+    except Exception:
+        # Fallback Option: If the overlay layer blocks it, move the real pointer directly to the center and click
+        print("JavaScript click fallback initiated...")
+        success_ok_btn = driver.find_element(By.CSS_SELECTOR, "button.swal2-confirm")
+        ActionChains(driver).move_to_element(success_ok_btn).click().perform()
+        print("Success popup 'OK' button forcefully clicked via Actions API.")    
+
+
 def login():
     # Check if the root logger has any handlers configured
     if not logging.root.handlers:
@@ -242,7 +344,7 @@ def login():
         print("Successfully clicked 'Continue'.")
 
         # Replace this list with your actual target Ration Card numbers
-        ration_cards = ['226487919888', '226487923313', '226487932918', '226487978667', '226488066768', '226488100552', '226488192724', '226488206098', '226488212849', '226488267470', '226488278049', '226488363287', '226488466477', '226488522164', '226488524446', '226488530628', '226488531971', '226488536337', '226488553581', '226488571491', '226488599210', '226488605255', '226488627867', '226488638425', '226488667057', '226488683672', '226488686448', '226488704366', '226488757370', '226488796887', '226488907313', '226488983851', '226489036405', '226489055671', '226489069015', '226489090524', '226489176840', '226489180457', '226489197725', '226489218964', '226489253499', '226489254753', '226489417513', '226489529321', '226489539898', '226489561982', '226489564289', '226489584256', '226489586112', '226489646226', '226489679133', '226489702521', '226489736524', '226489776416', '226489795683', '226489826479', '226489878451', '226489903241', '226489917157', '226489984089', '226481031582', '226481086311', '226481246697', '226481287369', '226481295091', '226481329177', '226481370727', '226481445235', '226481475437', '226481490056', '226481498137', '226481538910', '226481568664', '226481731382', '226481767777', '226481783742', '226481816740', '226481914283', '226481931836', '226482100875', '226482205405', '226482214647', '226482219572', '226482331544', '226482465109', '226482473179', '226482486773', '226482597161', '226482597425', '226482648129', '226482662478', '226482714442', '226482748625', '226482834104', '226482918139', '226483056531', '226483111689', '226483187660', '226483197585', '226483346894', '226483360580', '226483400789', '226483585926', '226483646792', '226483652305', '226483661577', '226483783307', '226483976844', '226484272146', '226484319895', '226484355015', '226484394012', '226484530730', '226484597586', '226484643774', '226484663169', '226484776610', '22648482055', '226485316537', '226485593171', '226485593536', '226485632613', '226485706648', '226485732124', '226485747657', '226485821857', '226485851903', '226485879336', '226485991440', '226486053393', '226486077050', '226486162149', '226486247960', '226486260561', '226486261393', '226486397072', '226486515964', '226486535743', '226486580336', '226486632946', '226486668463', '226486799132', '226486849531', '226486853603', '226486873055', '226486938586', '226486943358', '226487015741', '226487080693', '226487102828', '226487197251', '226487202125', '226487253122', '226487256814', '226487388396', '226487447259', '226487591416', '226487626974', '226487650645', '226487666863', '226487678954', '226487742085', '226487762811', '226487805756', '226487864158', '226487893332', '226487990250', '226488039906', '226488053587', '226488085912', '226488093473', '226488106469', '226488122234', '226488123151', '226488266071', '226488311893', '226488425215', '226488549478', '226488613216', '226488617835', '226488658989', '226488752364', '226488772008', '226489043496', '226489082771', '226489316989', '226489395447', '226489512586', '226489616105', '226489710028', '226489742367', '226489807035', '226489843278', '226489871259', '226489919266', '226489928354', '226489993637', '226489452114']
+        ration_cards = [ '226488571491', '226488599210', '226488605255', '226488627867', '226488638425', '226488667057', '226488683672', '226488686448', '226488704366', '226488757370', '226488796887', '226488907313', '226488983851', '226489036405', '226489055671', '226489069015', '226489090524', '226489176840', '226489180457', '226489197725', '226489218964', '226489253499', '226489254753', '226489417513', '226489529321', '226489539898', '226489561982', '226489564289', '226489584256', '226489586112', '226489646226', '226489679133', '226489702521', '226489736524', '226489776416', '226489795683', '226489826479', '226489878451', '226489903241', '226489917157', '226489984089', '226481031582', '226481086311', '226481246697', '226481287369', '226481295091', '226481329177', '226481370727', '226481445235', '226481475437', '226481490056', '226481498137', '226481538910', '226481568664', '226481731382', '226481767777', '226481783742', '226481816740', '226481914283', '226481931836', '226482100875', '226482205405', '226482214647', '226482219572', '226482331544', '226482465109', '226482473179', '226482486773', '226482597161', '226482597425', '226482648129', '226482662478', '226482714442', '226482748625', '226482834104', '226482918139', '226483056531', '226483111689', '226483187660', '226483197585', '226483346894', '226483360580', '226483400789', '226483585926', '226483646792', '226483652305', '226483661577', '226483783307', '226483976844', '226484272146', '226484319895', '226484355015', '226484394012', '226484530730', '226484597586', '226484643774', '226484663169', '226484776610', '22648482055', '226485316537', '226485593171', '226485593536', '226485632613', '226485706648', '226485732124', '226485747657', '226485821857', '226485851903', '226485879336', '226485991440', '226486053393', '226486077050', '226486162149', '226486247960', '226486260561', '226486261393', '226486397072', '226486515964', '226486535743', '226486580336', '226486632946', '226486668463', '226486799132', '226486849531', '226486853603', '226486873055', '226486938586', '226486943358', '226487015741', '226487080693', '226487102828', '226487197251', '226487202125', '226487253122', '226487256814', '226487388396', '226487447259', '226487591416', '226487626974', '226487650645', '226487666863', '226487678954', '226487742085', '226487762811', '226487805756', '226487864158', '226487893332', '226487990250', '226488039906', '226488053587', '226488085912', '226488093473', '226488106469', '226488122234', '226488123151', '226488266071', '226488311893', '226488425215', '226488549478', '226488613216', '226488617835', '226488658989', '226488752364', '226488772008', '226489043496', '226489082771', '226489316989', '226489395447', '226489512586', '226489616105', '226489710028', '226489742367', '226489807035', '226489843278', '226489871259', '226489919266', '226489928354', '226489993637', '226489452114']
         round_complete = False
         for card_number in ration_cards:
             check_date_and_village_set()
@@ -294,6 +396,7 @@ def login():
                 if len(identification_header) > 0:
                     print(f"Identification Details section is already visible on the screen. Skipping table action loops: {card_number}")
                     logging.info("Bypassed select buttons loop because Identification Details container is active.")
+                    for_single()
                     continue
                 else:
                     wait.until(EC.presence_of_element_located((By.CLASS_NAME, "custom-table")))
