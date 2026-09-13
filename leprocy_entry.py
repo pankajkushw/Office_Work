@@ -5,6 +5,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import Select, WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.service import Service
+from selenium.common.exceptions import TimeoutException
 import time, os, logging
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.keys import Keys
@@ -43,6 +44,7 @@ logging.basicConfig(
     format='%(asctime)s - %(levelname)s - %(message)s', # Log structure
     level=logging.INFO         # Capture INFO level messages and above
 )
+
 
 def select_angular_dropdown(placeholder_text, option_text):
     """
@@ -344,7 +346,7 @@ def login():
         print("Successfully clicked 'Continue'.")
 
         # Replace this list with your actual target Ration Card numbers
-        ration_cards = [ '226488571491', '226488599210', '226488605255', '226488627867', '226488638425', '226488667057', '226488683672', '226488686448', '226488704366', '226488757370', '226488796887', '226488907313', '226488983851', '226489036405', '226489055671', '226489069015', '226489090524', '226489176840', '226489180457', '226489197725', '226489218964', '226489253499', '226489254753', '226489417513', '226489529321', '226489539898', '226489561982', '226489564289', '226489584256', '226489586112', '226489646226', '226489679133', '226489702521', '226489736524', '226489776416', '226489795683', '226489826479', '226489878451', '226489903241', '226489917157', '226489984089', '226481031582', '226481086311', '226481246697', '226481287369', '226481295091', '226481329177', '226481370727', '226481445235', '226481475437', '226481490056', '226481498137', '226481538910', '226481568664', '226481731382', '226481767777', '226481783742', '226481816740', '226481914283', '226481931836', '226482100875', '226482205405', '226482214647', '226482219572', '226482331544', '226482465109', '226482473179', '226482486773', '226482597161', '226482597425', '226482648129', '226482662478', '226482714442', '226482748625', '226482834104', '226482918139', '226483056531', '226483111689', '226483187660', '226483197585', '226483346894', '226483360580', '226483400789', '226483585926', '226483646792', '226483652305', '226483661577', '226483783307', '226483976844', '226484272146', '226484319895', '226484355015', '226484394012', '226484530730', '226484597586', '226484643774', '226484663169', '226484776610', '22648482055', '226485316537', '226485593171', '226485593536', '226485632613', '226485706648', '226485732124', '226485747657', '226485821857', '226485851903', '226485879336', '226485991440', '226486053393', '226486077050', '226486162149', '226486247960', '226486260561', '226486261393', '226486397072', '226486515964', '226486535743', '226486580336', '226486632946', '226486668463', '226486799132', '226486849531', '226486853603', '226486873055', '226486938586', '226486943358', '226487015741', '226487080693', '226487102828', '226487197251', '226487202125', '226487253122', '226487256814', '226487388396', '226487447259', '226487591416', '226487626974', '226487650645', '226487666863', '226487678954', '226487742085', '226487762811', '226487805756', '226487864158', '226487893332', '226487990250', '226488039906', '226488053587', '226488085912', '226488093473', '226488106469', '226488122234', '226488123151', '226488266071', '226488311893', '226488425215', '226488549478', '226488613216', '226488617835', '226488658989', '226488752364', '226488772008', '226489043496', '226489082771', '226489316989', '226489395447', '226489512586', '226489616105', '226489710028', '226489742367', '226489807035', '226489843278', '226489871259', '226489919266', '226489928354', '226489993637', '226489452114']
+        ration_cards = ['226485821857', '226485851903', '226485879336', '226485991440', '226486053393', '226486077050', '226486162149', '226486247960', '226486260561', '226486261393', '226486397072', '226486515964', '226486535743', '226486580336', '226486632946', '226486668463', '226486799132', '226486849531', '226486853603', '226486873055', '226486938586', '226486943358', '226487015741', '226487080693', '226487102828', '226487197251', '226487202125', '226487253122', '226487256814', '226487388396', '226487447259', '226487591416', '226487626974', '226487650645', '226487666863', '226487678954', '226487742085', '226487762811', '226487805756', '226487864158', '226487893332', '226487990250', '226488039906', '226488053587', '226488085912', '226488093473', '226488106469', '226488122234', '226488123151', '226488266071', '226488311893', '226488425215', '226488549478', '226488613216', '226488617835', '226488658989', '226488752364', '226488772008', '226489043496', '226489082771', '226489316989', '226489395447', '226489512586', '226489616105', '226489710028', '226489742367', '226489807035', '226489843278', '226489871259', '226489919266', '226489928354', '226489993637', '226489452114']
         round_complete = False
         for card_number in ration_cards:
             check_date_and_village_set()
@@ -391,13 +393,51 @@ def login():
                 #Screening Logic will go here$$$$$$$$$$$$$$$$$$$$$$$$$$$$
                 # Find all active "Select" buttons in the table
                 # This uses a partial text match or exact match on the text inside the button/link
+             
+                try:
+                    # 1. Check if the "Ayushman Card Not Found" popup appears (waits up to 3 seconds)
+                    popup_header = WebDriverWait(driver, 3).until(
+                        EC.presence_of_element_located((By.XPATH, "//*[contains(text(), 'Ayushman Card Not Found')]"))
+                    )
+                    
+                    print(f"Popup encountered: Ayushman Card Not Found for card {card_number}. Dismissing and skipping.")
+                    #logging.warning(f"Ayushman Card Not Found for card: {card_number}")
+
+                    # 2. Locate and click the 'OK' button to dismiss the modal
+                    # Using a text match on the purple button text 'OK'
+                    ok_button = driver.find_element(By.XPATH, "//button[contains(text(), 'OK')] | //*[text()='OK']")
+                    ok_button.click()
+                    
+                    # 3. Wait briefly for the modal backdrop overlay to disappear before continuing the loop
+                    WebDriverWait(driver, 3).until(EC.staleness_of(popup_header))
+                    
+                    # 4. Skip the rest of the current iteration and move to the next member/card
+                    continue
+
+                except TimeoutException:
+                    # No popup appeared within 3 seconds, proceed normally with the form actions
+                    pass
 
                 identification_header = driver.find_elements(By.XPATH, "//*[contains(text(), 'Identification Details')]")
                 if len(identification_header) > 0:
-                    print(f"Identification Details section is already visible on the screen. Skipping table action loops: {card_number}")
+                    print(f"Identification Details section is already visible on the screen: {card_number}")
                     logging.info("Bypassed select buttons loop because Identification Details container is active.")
+                    
                     for_single()
-                    continue
+                    
+                    try:
+                        abha_field = driver.find_element(By.XPATH, "//mat-form-field[contains(., 'Abha Id')]//input")
+                        abha_id_value = abha_field.get_attribute("value")
+                        
+                        # # CHANGE HERE: Skip the loop if it is NOT present
+                        # if not abha_id_value or not abha_id_value.strip():
+                        #     print(f"Abha ID is missing for card {card_number}. Skipping next steps.")
+                        #     continue  
+                            
+                    except Exception as e:
+                        #logging.warning(f"Could not read Abha ID field: {str(e)}")
+                        # If the field can't be found, it's not present, so we skip
+                        continue
                 else:
                     wait.until(EC.presence_of_element_located((By.CLASS_NAME, "custom-table")))
                     # Target the buttons precisely using the class name 'action-btn' shown in your HTML
@@ -507,7 +547,7 @@ def login():
                         try:
                             # 1. Target the explicit SweetAlert container that is open on your screen
                             print("Checking for active SweetAlert warning layout...")
-                            swal_modal = WebDriverWait(driver, 5).until( # from 5 to 10
+                            swal_modal = WebDriverWait(driver, 3).until( # from 5 to 10
                                 EC.presence_of_element_located((By.CLASS_NAME, "swal2-modal"))
                             )
                             
@@ -516,7 +556,7 @@ def login():
                                 print("⚠️ Match found: 'Screening Already Done' alert verified.")
                                 
                                 # 2. Locate the precise SweetAlert confirm button using its dedicated library class
-                                ok_btn = WebDriverWait(driver, 5).until(
+                                ok_btn = WebDriverWait(driver, 3).until(
                                     EC.element_to_be_clickable((By.CSS_SELECTOR, "button.swal2-confirm"))
                                 )
                                 
@@ -524,10 +564,17 @@ def login():
                                 driver.execute_script("arguments[0].click();", ok_btn)
                                 print("SweetAlert 'OK' button successfully clicked.")
                                 
-                                # 4. Wait for the SweetAlert dark backdrop container to leave the DOM hierarchy entirely
-                                WebDriverWait(driver, 5).until( # from 5 to 10
-                                    EC.invisibility_of_element_located((By.CLASS_NAME, "swal2-container"))
+                                # # 4. Wait for the SweetAlert dark backdrop container to leave the DOM hierarchy entirely
+                                # WebDriverWait(driver, 3).until( # from 5 to 10
+                                #     EC.invisibility_of_element_located((By.CLASS_NAME, "swal2-container"))
+                                # )
+                                WebDriverWait(driver, 5).until(
+                                    EC.invisibility_of_element_located((By.CLASS_NAME, "swal2-modal"))
                                 )
+
+
+
+
                                 # 4. Wait for the SweetAlert dark backdrop container to leave the DOM hierarchy entirely
                                 # swal_container = driver.find_element(By.CLASS_NAME, "swal2-container")
                                 # WebDriverWait(driver, 5).until(EC.staleness_of(swal_container))
@@ -539,21 +586,72 @@ def login():
 
                         except Exception as e:
                             # If the modal doesn't exist, this block catch routes seamlessly into the normal flow
-                            print(f"No active validation alert container intercepted: {e}")
+                            print(f"No active validation alert container intercepted")
 
                         # --- THE CRITICAL CONDITIONAL SKIP ---
                         if screening_already_done:
                             print("Skipping remaining form fields. Routing directly back to the next loop iteration...\n")
-                            logging.info(f"screening already done for {ration_cards}: {i}")
+                            #logging.info(f"screening already done for {card_number}: {i}")
                             continue  # Breaks the current execution string and pulls the next record smoothly
 
                         # --- REST OF FORM SUBMISSION ROUTINE CONTINUES BELOW ---
                         print("Proceeding with normal report creation actions...")
 
-                        time.sleep(2) 
+                        try:
+                            abha_input_element = WebDriverWait(driver, 5).until(
+                                EC.presence_of_element_located((By.XPATH, "//input[@formcontrolname='abhaId']"))
+                            )
+                            abha_id_value = abha_input_element.get_attribute("value")
+                            
+                            # # CHANGE HERE: Skip the loop if it is NOT present
+                            # if not abha_id_value or not abha_id_value.strip():
+                            #     print(f"Abha ID is missing for card {card_number}. Skipping next steps.")
+                            #     clear_search_btn = driver.find_element(By.XPATH, "//button[contains(., 'Search')]/following-sibling::button[contains(., 'Clear')]")
+                            #     clear_search_btn.click()
+                            if abha_id_value and abha_id_value.strip():
+                                print(f"Abha ID is populated: {abha_id_value}")
+                                #logging.info(f"Abha ID found for member: {abha_id_value}")
+                                # Add your loop skip or 'continue' logic here if needed
+                                
+                            else:
+                                print("Abha ID field is empty/blank.")
+                                clear_search_btn = driver.find_element(By.XPATH, "//button[contains(., 'Search')]/following-sibling::button[contains(., 'Clear')]")
+                                clear_search_btn.click()
+                                search_btn_xpath = (
+                                    "//button[@type='submit' or contains(., 'Search')]"
+                                    " | //mat-form-field//following::button[contains(., 'Search')]"
+                                    " | //span[contains(text(), 'Search')]/ancestor::button"
+                                    " | //button[contains(@class, 'mat-focus-indicator') and contains(., 'Search')]"
+                                )
+                                
+                                # 2. Wait until the button is present in the DOM layout
+                                search_btn = wait.until(EC.presence_of_element_located((By.XPATH, search_btn_xpath)))
+                                # 3. Clean click execution strategy
+                                # Try a standard driver click first to allow Angular event bubbles to fire naturally
+                                search_btn.click()
+                                #logging.info("Abha ID is not populated. Proceeding with form execution.")
+                                # Add your form entry/generation logic here
+                                continue
+                                
+                        except Exception as e:
+                            print(f"Error while checking Abha ID field: {str(e)}")
+                            # If the field can't be found, it's not present, so we skip
+
+
+                        try:
+                           # Wait up to 10 seconds for the SweetAlert OK button to be clickable
+                            ok_button = WebDriverWait(driver, 10).until(
+                            EC.element_to_be_clickable((By.CSS_SELECTOR, "button.swal2-confirm"))
+                            )
+                            ok_button.click()
+                            print("Popup closed successfully.")
+                        except Exception as e:
+                            print(f"Failed to close popup: {e}")
+
+                        time.sleep(1) 
                         #####################################
                         try:
-                            logging.info(f"screening for {ration_cards}: {i}")
+                            print(f"screening for {card_number}: {i}")
                             # ----------------------------------------------------
                             # 1. Select "No" in the "Belongs to PVTG Category" Dropdown
                             # ----------------------------------------------------
@@ -641,7 +739,7 @@ def login():
                             driver.execute_script("arguments[0].click();", yes_save_btn)
                             print("Confirmation modal 'Yes, Save' button successfully clicked.")
 
-
+                            mySleepFunction(3)
                             try:
                                 # 1. Target the button via its unique SweetAlert confirmation class
                                 success_ok_btn = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, "button.swal2-confirm")))
@@ -660,7 +758,7 @@ def login():
                             # 3. Synchronize thread layout: Wait for the SweetAlert backdrop container to leave the view entirely
                             # wait.until(EC.invisibility_of_element_located((By.CLASS_NAME, "swal2-container")))
                             # print("Success modal cleared. Main form view is ready for the next iteration.")
-
+                            
 
 
 
