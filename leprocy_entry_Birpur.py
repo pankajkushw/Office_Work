@@ -28,7 +28,7 @@ wait = WebDriverWait(driver, 10)
 
 CHC = "CHC BISHRAMPUR"
 NAME = "Heenam Kushwaha"
-target_village = "Karampur"
+target_village = "Birpur"
 target_date = "01-09-2026"
 driver.implicitly_wait(10) 
 def mySleepFunction(seconds):
@@ -93,7 +93,7 @@ def check_date_and_village_set():
         village_dropdown.click()
 
         # 4. Handle Option Selection using your expanded XPATH pattern with case-insensitive matching
-        option_xpath = f"//mat-option[contains(translate(., 'KARAMPUR', 'karampur'), '{target_village.lower()}')] | //mat-option//span[contains(translate(text(), 'KARAMPUR', 'karampur'), '{target_village.lower()}')]"
+        option_xpath = f"//mat-option[contains(translate(., 'BIRPUR', 'birpur'), '{target_village.lower()}')] | //mat-option//span[contains(translate(text(), 'BIRPUR', 'birpur'), '{target_village.lower()}')]"
         option = wait.until(EC.element_to_be_clickable((By.XPATH, option_xpath)))
         option.click()
         print(f"Selected village: {target_village}")
@@ -319,13 +319,6 @@ def login():
         print("Successfully clicked 'Go to Entry Page' button.")
 
 
-
-
-
-
-        # Replace with the name of the village you want to choose from the modal dropdown options
-        target_village = "Karampur" 
-
         # 1. Locate and click the Angular dropdown menu container
         dropdown_xpath = "//mat-select[contains(., 'Select Village')] | //div[contains(text(), 'Select Village')] | //mat-form-field[contains(., 'Select Village')]"
         dropdown = wait.until(EC.element_to_be_clickable((By.XPATH, dropdown_xpath)))
@@ -346,7 +339,7 @@ def login():
         print("Successfully clicked 'Continue'.")
 
         # Replace this list with your actual target Ration Card numbers
-        ration_cards = ['226487742085', '226487762811', '226487805756', '226487864158', '226487893332', '226487990250', '226488039906', '226488053587', '226488085912', '226488093473', '226488106469', '226488122234', '226488123151', '226488266071', '226488311893', '226488425215', '226488549478', '226488613216', '226488617835', '226488658989', '226488752364', '226488772008', '226489043496', '226489082771', '226489316989', '226489395447', '226489512586', '226489616105', '226489710028', '226489742367', '226489807035', '226489843278', '226489871259', '226489919266', '226489928354', '226489993637', '226489452114']
+        ration_cards = ['226487034206', '226487095289', '226487163297', '226487189442', '226487265462', '226487292403', '226487305499', '226487325738', '226487329651', '226487334857', '226487350386', '226487362043', '226487391586', '226487392864', '226487415995', '226487483688', '226487534505', '226487599762', '226487636756', '226487643719', '226487668447', '226487702541', '226487726654', '226487746497', '226487810283', '226487836486', '226487853389', '226487884748', '226487895630', '226487948273', '226488004426']
         round_complete = False
         for card_number in ration_cards:
             check_date_and_village_set()
@@ -471,7 +464,7 @@ def login():
                             village_dropdown.click()
 
                             # 4. Handle Option Selection using your expanded XPATH pattern with case-insensitive matching
-                            option_xpath = f"//mat-option[contains(translate(., 'KARAMPUR', 'karampur'), '{target_village.lower()}')] | //mat-option//span[contains(translate(text(), 'KARAMPUR', 'karampur'), '{target_village.lower()}')]"
+                            option_xpath = f"//mat-option[contains(translate(., 'BIRPUR', 'birpur'), '{target_village.lower()}')] | //mat-option//span[contains(translate(text(), 'BIRPUR', 'birpur'), '{target_village.lower()}')]"
                             option = wait.until(EC.element_to_be_clickable((By.XPATH, option_xpath)))
                             option.click()
                             print(f"Selected village: {target_village}")
