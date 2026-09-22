@@ -39,11 +39,26 @@ wait = WebDriverWait(driver, 10)
 
 # Configure the logging system
 logging.basicConfig(
-    filename='app.log',         # Name of the log file
+    filename='Balrampur_Abha_ID.log',         # Name of the log file
     filemode='a',              # 'a' to append logs, 'w' to overwrite each run
     format='%(asctime)s - %(levelname)s - %(message)s', # Log structure
     level=logging.INFO         # Capture INFO level messages and above
 )
+
+def abha_member_log(card_number, message):
+    # Locate the name input field safely using its formcontrolname attribute
+    name_input = wait.until(
+        EC.presence_of_element_located((By.XPATH, "//input[@formcontrolname='name']"))
+    )
+    
+    # Retrieve the text present inside the input field value attribute
+    name_value = name_input.get_attribute("value")
+    logging.info(f"Card Number: {card_number} | {message} for Name: {name_value}")
+    print(f"Retrieved Name: {name_value}")
+
+
+
+
 
 
 def select_angular_dropdown(placeholder_text, option_text):
@@ -243,6 +258,8 @@ def for_single():
 
 
 def login():
+
+
     # Check if the root logger has any handlers configured
     if not logging.root.handlers:
     # Call basicConfig to add a console handler with a pre-defined format
@@ -272,6 +289,7 @@ def login():
         employee_label = wait.until(EC.element_to_be_clickable((By.XPATH, employee_xpath)))
         employee_label.click()
         print(f"Selected employee: {employee_name}")
+
 
         # To click the pink/red "X" close button:
         close_button = driver.find_element(By.XPATH, "//button[@aria-label='Close installation prompt']")
@@ -363,7 +381,7 @@ def login():
         print(f"Successfully clicked 'Continue'. (line: {sys._getframe().f_lineno})")
 
         # Replace this list with your actual target Ration Card numbers
-        ration_cards = ['226487670895', '226487745368', '226488008757', '226488015398', '226488084566', '226488150138', '226488198509', '226488233248', '226488271634', '226488405262', '226488405692', '226488556103', '226488718561', '226488770141', '226488774372', '226488908355', '226489094621', '226489176158', '226489296195', '226489422960', '226489475586', '226489501599', '226489548065', '226489588311', '226489635285', '226489640402', '226489702177', '226489707568', '226489743106', '226489752743', '226489801440', '226489826398', '226489979539', '226489995456', '226481156300', '226481280950', '226481336256', '226481749253', '226481996251', '226482046050', '226482145497', '226482196630', '226482262496', '226482325966', '226482519894', '226482592397', '226482988083', '226483460877', '226483561427', '226483996236', '226484056879', '226484114072', '226484391118', '226484585766', '226484614790', '226484829210', '226484837424', '226485036739', '226485360218', '226485604845', '226485717252', '226485780226', '226485832537', '226486034146', '226486053497', '226486058396', '226486117845', '226486128071', '226486512983', '226486529259', '226486539494', '226486636987', '226486724756', '226486819896', '226486962512', '226487078252', '226487172375', '226487310928', '226487632111', '226487691950', '226487709487', '226488143666', '226488227194', '226488570440', '226488671751', '226488734908', '226488887164', '226488902968', '226488947325', '226489254175',  '226489336251', '226489587274', '226489665424', '226489700178', '226489709765', '226489813931', '226489913534', '226484565907']
+        ration_cards = ['226487632111', '226487691950', '226487709487', '226487848264', '226488143666', '226488227194', '226488570440', '226488671751', '226488734908', '226488887164', '226488902968', '226488947325', '226489254175', '226489266146', '226489336251', '226489587274', '226489665424', '226489700178', '226489709765', '226489813931', '226489913534', '226484565907']
         round_complete = False
         for card_number in ration_cards:
             
@@ -409,6 +427,13 @@ def login():
 
                 # Try a standard driver click first to allow Angular event bubbles to fire naturally
                 search_btn.click()
+
+                # # Wait for the "OK" button to be clickable and then click it
+                # ok_button = WebDriverWait(driver, 10).until(
+                #     EC.element_to_be_clickable((By.CLASS_NAME, "swal2-confirm"))
+                # )
+                # ok_button.click()
+
                 print(f"Search Member of Ration Card. (line: {sys._getframe().f_lineno})")
 
                 #Screening Logic will go here$$$$$$$$$$$$$$$$$$$$$$$$$$$$
@@ -422,6 +447,7 @@ def login():
                     )
                     
                     print(f"Popup encountered: Ayushman Card Not Found for card {card_number}. Dismissing and skipping. (line: {sys._getframe().f_lineno})")
+                    abha_member_log(card_number, "Ayushman Card Not Found")
                     #logging.warning(f"Ayushman Card Not Found for card: {card_number}")
 
                     # 2. Locate and click the 'OK' button to dismiss the modal
@@ -458,7 +484,9 @@ def login():
                     except Exception as e:
                         #logging.warning(f"Could not read Abha ID field: {str(e)}")
                         # If the field can't be found, it's not present, so we skip
-                        continue
+                        #print(f"Could not read Abha ID field for card {card_number}. Skipping next steps. Error: {str(e)} line: {sys._getframe().f_lineno}")
+                        # Locate the name input field safely using its formcontrolname attribute
+                        abha_member_log(card_number, 'Abha ID Not Found')
                 else:
                     wait.until(EC.presence_of_element_located((By.CLASS_NAME, "custom-table")))
                     # Target the buttons precisely using the class name 'action-btn' shown in your HTML
@@ -541,7 +569,7 @@ def login():
 
                             except Exception as e:
                                 print(f"Failed to select village '{target_village}' at line {sys._getframe().f_lineno}")
-                                print(f"Error Details: {type(e).__name__} - {e}")
+                                #print(f"Error Details: {type(e).__name__} - {e}")
                                 raise e
                             
 
@@ -684,6 +712,9 @@ def login():
                                 
                             else:
                                 print("Abha ID field is empty/blank.")
+
+                                abha_member_log(card_number, 'abha_id_not_found')
+
                                 clear_search_btn = driver.find_element(By.XPATH, "//button[contains(., 'Search')]/following-sibling::button[contains(., 'Clear')]")
                                 clear_search_btn.click()
                                 search_btn_xpath = (
@@ -703,7 +734,9 @@ def login():
                                 continue
                                 
                         except Exception as e:
-                            print(f"Error while checking Abha ID field: {e} line: {sys._getframe().f_lineno}")
+                            #print(f"Error while checking Abha ID field: {e} line: {sys._getframe().f_lineno}")
+                            print(f"Abha ID field is not present on the form. Skipping next steps for card {card_number}. line: {sys._getframe().f_lineno}")
+                            abha_member_log(card_number, 'abha_id_not_found')
                             # If the field can't be found, it's not present, so we skip
 
 
@@ -716,7 +749,7 @@ def login():
                             print("Popup closed successfully.")
                             continue
                         except Exception as e:
-                            print(f"Failed to close popup: {e} line: {sys._getframe().f_lineno}")
+                            print(f"Failed to close popup: Already Exist  line: {sys._getframe().f_lineno}")
 
                         time.sleep(1) 
                         #####################################
@@ -838,7 +871,8 @@ def login():
                                 continue
 
                         except Exception as e: # inner exception of option No, No, & photo upload
-                            print(f"An error occurred during automation: {e} line: {sys._getframe().f_lineno}")
+                            #print(f"An error occurred during automation: {e} line: {sys._getframe().f_lineno}")
+                            print(f"An error occurred during form submission for card {card_number} line: {sys._getframe().f_lineno}")
 
                        
 
@@ -846,23 +880,31 @@ def login():
 #####################################
 
                     except Exception as e:
-                        print(f"Error clicking button #{i + 1}: {e} line: {sys._getframe().f_lineno}")
-                        
+                        print(f"Error clicking button #{i + 1} line: {sys._getframe().f_lineno}")
+                        ok_button = driver.find_element(By.CSS_SELECTOR, "button.swal2-confirm")
+
+                        # Force execution bypassing the UI layer
+                        driver.execute_script("arguments[0].click();", ok_button)
+
                         # Note: If clicking a button causes a full page reload or changes the DOM structure, 
                         # you will need to re-fetch the element list inside the loop to avoid StaleElementReferenceException.
                         
                     except Exception as e:
-                        print(f"Could not click button #{1}: {e} line: {sys._getframe().f_lineno}")
+                        print(f"Could not click button #{1}: line: {sys._getframe().f_lineno}")
+
+
+
+
 
                 time.sleep(3)
                 #Screening Logic will go here$$$$$$$$$$$$$$$$$$$$$$$$$$$$                
 
             except Exception as e: # exception of ration card for loop
-                print(f"Pipeline crashed for card: {card_number} with error: {e} line: {sys._getframe().f_lineno}")
+                print(f"Pipeline crashed for card: {card_number} with error, Going in next Ration card line: {sys._getframe().f_lineno}")
                 
 
     except Exception as e: # exception of login function
-        print(f"An error occurred while filling the form: {e} line: {sys._getframe().f_lineno}")
+        print(f"An error occurred while filling the form: line: {sys._getframe().f_lineno}")
 
 
 

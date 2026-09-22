@@ -363,7 +363,7 @@ def login():
         print(f"Successfully clicked 'Continue'. (line: {sys._getframe().f_lineno})")
 
         # Replace this list with your actual target Ration Card numbers
-        ration_cards = ['226486486549', '226487675760', '226487723133', '226488259726', '226488385683' ]
+        ration_cards = ['226489202010', '226489202010', '226488385683', '226486018339', '226485466162', '226484712550']
         round_complete = False
         for card_number in ration_cards:
             
