@@ -448,12 +448,16 @@ def login():
                     
                     print(f"Popup encountered: Ayushman Card Not Found for card {card_number}. Dismissing and skipping. (line: {sys._getframe().f_lineno})")
                     abha_member_log(card_number, "Ayushman Card Not Found")
-                    #logging.warning(f"Ayushman Card Not Found for card: {card_number}")
+                    logging.info(f"Ayushman Card Not Found for card: {card_number}")
 
                     # 2. Locate and click the 'OK' button to dismiss the modal
                     # Using a text match on the purple button text 'OK'
-                    ok_button = driver.find_element(By.XPATH, "//button[contains(text(), 'OK')] | //*[text()='OK']")
-                    ok_button.click()
+                    ok_button = WebDriverWait(driver, 3).until(
+                        EC.element_to_be_clickable((By.XPATH, "//button[contains(text(), 'OK')] | //*[text()='OK']"))
+                    )
+                    # Force click using JavaScript
+                    driver.execute_script("arguments[0].click();", ok_button)
+                    print(f"SweetAlert 'OK' button successfully clicked. (line: {sys._getframe().f_lineno})")
                     
                     # 3. Wait briefly for the modal backdrop overlay to disappear before continuing the loop
                     WebDriverWait(driver, 3).until(EC.staleness_of(popup_header))
@@ -488,13 +492,27 @@ def login():
                         # Locate the name input field safely using its formcontrolname attribute
                         abha_member_log(card_number, 'Abha ID Not Found')
                 else:
-                    wait.until(EC.presence_of_element_located((By.CLASS_NAME, "custom-table")))
-                    # Target the buttons precisely using the class name 'action-btn' shown in your HTML
-                    select_buttons = driver.find_elements(By.CSS_SELECTOR, "button.action-btn")
-                    total_buttons = len(select_buttons)
+                        try:
+                            print(f"⚠️ Match found: 'Screening Already Done' alert verified. (line: {sys._getframe().f_lineno})")
+                            # 2. Locate the precise SweetAlert confirm button using its dedicated library class
+                            ok_btn = WebDriverWait(driver, 3).until(
+                                EC.element_to_be_clickable((By.CSS_SELECTOR, "button.swal2-confirm"))
+                            )
+                            #3. Force click via JavaScript to bypass any backdrop focus lock layers
+                            driver.execute_script("arguments[0].click();", ok_btn)
+                            print(f"SweetAlert 'OK' button successfully clicked. (line: {sys._getframe().f_lineno})")
 
-                    print(f"Found {total_buttons} matching 'Select' buttons. line: {sys._getframe().f_lineno}")
-                    logging.info(f"Member in :  {card_number} : {total_buttons}")
+                        except Exception as e:
+                            print(f" Already Screened Pop up not generated. line: {sys._getframe().f_lineno}    ")
+
+
+                wait.until(EC.presence_of_element_located((By.CLASS_NAME, "custom-table")))
+                # Target the buttons precisely using the class name 'action-btn' shown in your HTML
+                select_buttons = driver.find_elements(By.CSS_SELECTOR, "button.action-btn")
+                total_buttons = len(select_buttons)
+
+                print(f"Found {total_buttons} matching 'Select' buttons. line: {sys._getframe().f_lineno}")
+                logging.info(f"Member in :  {card_number} : {total_buttons}")
 
                 counter = 0
                 
@@ -656,8 +674,9 @@ def login():
                                 ok_btn = WebDriverWait(driver, 3).until(
                                     EC.element_to_be_clickable((By.CSS_SELECTOR, "button.swal2-confirm"))
                                 )
-                                
-                                # 3. Force click via JavaScript to bypass any backdrop focus lock layers
+
+                               
+                                #3. Force click via JavaScript to bypass any backdrop focus lock layers
                                 driver.execute_script("arguments[0].click();", ok_btn)
                                 print(f"SweetAlert 'OK' button successfully clicked. (line: {sys._getframe().f_lineno})")
                                 
@@ -665,7 +684,7 @@ def login():
                                 # WebDriverWait(driver, 3).until( # from 5 to 10
                                 #     EC.invisibility_of_element_located((By.CLASS_NAME, "swal2-container"))
                                 # )
-                                WebDriverWait(driver, 5).until(
+                                WebDriverWait(driver, 3).until(
                                     EC.invisibility_of_element_located((By.CLASS_NAME, "swal2-modal"))
                                 )
 
