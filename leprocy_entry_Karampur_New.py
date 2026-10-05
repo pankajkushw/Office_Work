@@ -39,7 +39,7 @@ wait = WebDriverWait(driver, 10)
 
 # Configure the logging system
 logging.basicConfig(
-    filename='Karampur_170926.log',         # Name of the log file
+    filename='Birpur03102026.log',         # Name of the log file
     filemode='a',              # 'a' to append logs, 'w' to overwrite each run
     format='%(asctime)s - %(levelname)s - %(message)s', # Log structure
     level=logging.INFO         # Capture INFO level messages and above
