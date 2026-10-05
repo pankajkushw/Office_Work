@@ -1,0 +1,871 @@
+import sys
+
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import Select, WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.chrome.service import Service
+from selenium.common.exceptions import TimeoutException
+import time, os, logging, sys
+from selenium.webdriver.common.action_chains import ActionChains
+from selenium.webdriver.common.keys import Keys
+
+
+
+# Initialize driver
+options = webdriver.ChromeOptions()
+options.add_argument("--use-fake-ui-for-media-stream")
+options.add_argument("--use-fake-device-for-media-stream")
+
+
+
+driver = webdriver.Chrome(options=options)
+driver.get("https://govthealth.cg.gov.in/uhsmis/#/auth")
+
+# Define an explicit wait timeout
+wait = WebDriverWait(driver, 10)
+
+
+CHC = "CHC BISHRAMPUR"
+NAME = "Heenam Kushwaha"
+target_village = "Birpur"
+target_date = "01-09-2026" 
+driver.implicitly_wait(10) 
+def mySleepFunction(seconds):
+    for i in range(seconds):
+        print(f"Waiting... {seconds - i} seconds remaining", end="\r")
+        time.sleep(1)# Define an explicit wait timeout
+wait = WebDriverWait(driver, 10)
+
+# Configure the logging system
+logging.basicConfig(
+    filename='Birpur03102026.log',         # Name of the log file
+    filemode='a',              # 'a' to append logs, 'w' to overwrite each run
+    format='%(asctime)s - %(levelname)s - %(message)s', # Log structure
+    level=logging.INFO         # Capture INFO level messages and above
+)
+
+
+def select_angular_dropdown(placeholder_text, option_text):
+    """
+    Helper function to click an Angular Material dropdown by its placeholder text
+    and select a specific option from the overlay panel.
+    """
+    # 1. Locate and click the dropdown trigger container based on its placeholder label text
+    dropdown_xpath = f"//mat-form-field[contains(., '{placeholder_text}')]//mat-select | //div[contains(text(), '{placeholder_text}')]"
+    dropdown = wait.until(EC.element_to_be_clickable((By.XPATH, dropdown_xpath)))
+    dropdown.click()
+    
+    # 2. Wait for the material option panel overlay to pop up and click the matching choice
+    option_xpath = f"//mat-option[contains(., '{option_text}')] | //span[contains(@class, 'mat-option-text') and contains(text(), '{option_text}')]"
+    option = wait.until(EC.element_to_be_clickable((By.XPATH, option_xpath)))
+    option.click()
+
+def check_date_and_village_set():
+    # Define target values
+    # 1. Locate the form fields
+    # Date container element mapping to the mat-form-field
+    date_field = driver.find_element(By.XPATH, "//mat-form-field[contains(., 'Select Planned Visit Date')]")
+    # Village container element mapping to the mat-form-field
+    village_field = driver.find_element(By.XPATH, "//mat-form-field[contains(., 'Select Village')]")
+
+    # 2. Extract class attributes to verify the "ng-invalid" validation status (red highlight indicator)
+    date_classes = date_field.get_attribute("class")
+    village_classes = village_field.get_attribute("class")
+
+    # Check if both fields contain the Angular invalid class marker
+    if "ng-invalid" in date_classes and "ng-invalid" in village_classes:
+        print(f"Both fields are highlighted in red (invalid status). Injecting target data... (Line: {sys._getframe().f_lineno})")
+        # 1. Wait for global Angular loader to disappear completely
+        wait.until(EC.invisibility_of_element_located((By.TAG_NAME, "app-loader")))
+        
+        # 2. Input Planned Visit Date via JavaScript execution
+        # (This bypasses click interceptions if the read-only or overlay blocks standard input typing)
+        date_input = wait.until(EC.presence_of_element_located((By.XPATH, "//input[contains(@placeholder, 'Visit Date')] | //mat-form-field[contains(., 'Visit Date')]//input")))
+        driver.execute_script("arguments[0].value = arguments[1];", date_input, target_date)
+        # Trigger standard input/change events so Angular detects the value update
+        driver.execute_script("arguments[0].dispatchEvent(new Event('input', { bubbles: true }));", date_input)
+        #driver.execute_script("arguments[0].dispatchEvent(new Event('change', { bubbles: True }));", date_input)
+        print(f"Set planned visit date to: {target_date} (Line: {sys._getframe().f_lineno})")
+
+        # # # 3. Open Village Dropdown Panel
+        # print(f"Attempting to select village: {target_village} (Line: {sys._getframe().f_lineno})")
+        # village_dropdown = wait.until(EC.element_to_be_clickable((By.XPATH, "//mat-select | //mat-form-field[contains(., 'Village')]//mat-select")))
+        # village_dropdown.click()
+        # print(f"Village dropdown opened (Line: {sys._getframe().f_lineno})")
+
+        # # 4. Handle Option Selection using your expanded XPATH pattern with case-insensitive matching
+        # print(f"Attempting to select village: {target_village} (Line: {sys._getframe().f_lineno})")
+        # option_xpath = f"//mat-option[contains(translate(., 'BALRAMPUR', 'Balrampur'), '{target_village.lower()}')] | //mat-option//span[contains(translate(text(), 'BALRAMPUR', 'Balrampur'), '{target_village.lower()}')]"
+        # option = wait.until(EC.element_to_be_clickable((By.XPATH, option_xpath)))
+        # option.click()
+        # print(f"Selected village: {target_village} line: {sys._getframe().f_lineno}")
+
+        # 1. Locate and click the Angular dropdown menu container
+        dropdown_xpath = "//mat-select[contains(., 'Select Village')] | //div[contains(text(), 'Select Village')] | //mat-form-field[contains(., 'Select Village')]"
+        dropdown = wait.until(EC.element_to_be_clickable((By.XPATH, dropdown_xpath)))
+        dropdown.click()
+        print(f"Dropdown opened.line: {sys._getframe().f_lineno}")
+
+        # 2. Wait for the overlay option panel to pop up and click the targeted choice
+        option_xpath = f"//mat-option[contains(., '{target_village}')] | //span[contains(@class, 'mat-option-text') and contains(text(), '{target_village}')]"
+        option = wait.until(EC.element_to_be_clickable((By.XPATH, option_xpath)))
+        option.click()
+        print(f"Selected village: {target_village} (line: {sys._getframe().f_lineno})")
+        
+        # 3. Locate and click the "Continue" button
+        # Using text matching helps isolate it even if it changes from disabled to active state
+        continue_btn_xpath = "//button[contains(., 'Continue')] | //span[contains(text(), 'Continue')]/ancestor::button"
+        continue_btn = wait.until(EC.element_to_be_clickable((By.XPATH, continue_btn_xpath)))
+        continue_btn.click()
+        print(f"Successfully clicked 'Continue'. (line: {sys._getframe().f_lineno})")
+
+        # # 1. Broadly target the search button card using text and style classes
+        # search_btn_xpath = (
+        #     "//button[@type='submit' or contains(., 'Continue')]"
+        #     " | //mat-form-field//following::button[contains(., 'Continue')]"
+        #     " | //span[contains(text(), 'Continue')]/ancestor::button"
+        #     " | //button[contains(@class, 'mat-focus-indicator') and contains(., 'Continue')]"
+        # )
+        
+        # # 2. Wait until the button is present in the DOM layout
+        # search_btn = wait.until(EC.presence_of_element_located((By.XPATH, search_btn_xpath)))
+        
+        # # Try a standard driver click first to allow Angular event bubbles to fire naturally
+        # search_btn.click()
+        # print("Invalidated, setting again.")
+
+    else:
+        print(f"One or both fields do not show a validation error layout.(Line: {sys._getframe().f_lineno})")
+        return False
+
+
+
+def for_single():
+    select_angular_dropdown("Belongs to PVTG Category", "No")
+    time.sleep(0.5)
+    
+    # Wait for the option list overlay to appear and click "No"
+    select_angular_dropdown("Suspected", "No")
+    
+    # Small pause to let the overlay close cleanly
+    time.sleep(0.5)
+
+    #select_angular_dropdown("गर्भवती / स्तनपान कराने वाली", "No")
+    try:
+        # 1. 3 सेकंड का एक छोटा वेट लगाएँ ताकि चेक किया जा सके कि dropdown स्क्रीन पर मौजूद है या नहीं
+        dropdown_label = "गर्भवती / स्तनपान कराने वाली"
+        select_xpath = f"//mat-select[contains(normalize-space(.), '{dropdown_label}')] | //div[contains(normalize-space(.), '{dropdown_label}')]//mat-select"
+        
+        # यदि element दिखाई देता है, तो इसे variable में स्टोर करें
+        is_visible = WebDriverWait(driver, 5).until( #from 3 to 10
+            EC.presence_of_element_located((By.XPATH, select_xpath))
+        )
+        
+        # 2. केवल element मिलने पर ही फ़ंक्शन को कॉल करें
+        select_angular_dropdown("गर्भवती / स्तनपान कराने वाली", "No")
+        print("गर्भवती / स्तनपान कराने वाली dropdown सफलतापूर्वक सेट कर दिया गया है।")
+
+    except Exception:
+        # अगर element 3 सेकंड में नहीं मिलता, तो script बिना क्रैश हुए इसे छोड़ देगी
+        print("गर्भवती / स्तनपान कराने वाली dropdown स्क्रीन पर दिखाई नहीं दिया। आगे बढ़ रहे हैं...")
+
+    
+    time.sleep(0.5)
+
+    # ----------------------------------------------------
+    # 3. Tick the Consent Checkbox
+    # ----------------------------------------------------
+    # Target the inner invisible input or the mat-checkbox label component
+    # 1. Locate the checkbox element safely using dynamic layout variations
+    checkbox = wait.until(EC.presence_of_element_located((
+        By.XPATH, "//mat-checkbox//input[@type='checkbox'] | //mat-checkbox | //input[@type='checkbox']"
+    )))
+
+    # 2. Scroll to the element to make sure it is in view
+    driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", checkbox)
+
+    # 3. Force the click event via JavaScript to avoid element click intercepted errors
+    driver.execute_script("arguments[0].click();", checkbox)
+
+    # ----------------------------------------------------
+    # 4. Upload a Dummy Picture
+    # ----------------------------------------------------
+    # --- 1. File Upload Phase ---
+    dummy_image_path = os.path.abspath("temp_placeholder.jpg")
+    if not os.path.exists(dummy_image_path):
+        with open(dummy_image_path, "wb") as f:
+            f.write(b"\xFF\xD8\xFF\xE0\x00\x10JFIF\x00\x01\x01\x01\x00`\x00`\x00\x00\xFF\xDB\x00C\x00\x08\x06\x06\x07\x06\x05\x08\x07\x07\x07\t\t\x08\n\x0C\x14\r\x0C\x0B\x0B\x0C\x19\x12\x13\x0F\x14\x1D\x1A\x1F\x1E\x1D\x1A\x1C\x1C $.' \",#\x1C\x1C(7),01444\x1F'9=82<.342\xFF\xC0\x00\x0B\x08\x00\x01\x00\x01\x01\x01\x11\x01\xFF\xC4\x00\x15\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xDA\x00\x0C\x01\x01\x00\x00\x3F\x00\xB2\xC0\xFF\xD9")
+
+    # Target the hidden browser file channel input directly
+    photo_input = driver.find_element(By.XPATH, "//input[@type='file']")
+    photo_input.send_keys(dummy_image_path)
+    print("Placeholder photo successfully routed to file stream.")
+
+    # --- 2. Corrected Synchronization Wait ---
+    # Use the global 'wait' object instance to keep timeout metrics uniform.
+    # This explicitly waits for the image rendering preview frame to appear in the container layout.
+    wait.until(EC.presence_of_element_located((
+        By.XPATH, "//div[contains(@class, 'image')]//img | //img[not(@id) and @src] | //*[contains(@class, 'preview')]"
+    )))
+    print("Form validation refreshed: Photo preview detected.")
+
+    # --- 3. Click Execution ---
+    submit_btn = wait.until(EC.presence_of_element_located((
+        By.XPATH, "//button[contains(normalize-space(.), 'Submit Leprosy Report')]"
+    )))
+    driver.execute_script("arguments[0].click();", submit_btn)
+    print("Form submission executed successfully.")
+
+
+    # 1. Explicitly wait until the SweetAlert confirm button is interactive on the screen viewport
+    yes_save_btn = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, "button.swal2-confirm")))
+    
+    # 2. Execute the click using JavaScript to guarantee execution through the backdrop fade overlay
+    driver.execute_script("arguments[0].click();", yes_save_btn)
+    print("Confirmation modal 'Yes, Save' button successfully clicked.")
+
+
+    try:
+        # 1. Target the button via its unique SweetAlert confirmation class
+        success_ok_btn = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, "button.swal2-confirm")))
+        
+        # 2. Fix: Corrected syntax using arguments[0] to run the native browser click track
+        driver.execute_script("arguments[0].click();", success_ok_btn)
+        print("Success popup 'OK' button clicked via corrected JS call.")
+        
+    except Exception:
+        # Fallback Option: If the overlay layer blocks it, move the real pointer directly to the center and click
+        print("JavaScript click fallback initiated...")
+        success_ok_btn = driver.find_element(By.CSS_SELECTOR, "button.swal2-confirm")
+        ActionChains(driver).move_to_element(success_ok_btn).click().perform()
+        print("Success popup 'OK' button forcefully clicked via Actions API.")    
+
+
+def login():
+    # Check if the root logger has any handlers configured
+    if not logging.root.handlers:
+    # Call basicConfig to add a console handler with a pre-defined format
+        logging.basicConfig(
+            format='%(asctime)s - %(levelname)s - %(message)s',
+            level=logging.INFO
+        )
+
+    try:
+        # Step 1: Select District (Replace 'Raipur' with your actual district value)
+        select_angular_dropdown("Select District", "SURAJPUR  (सूरजपुर )")
+        
+        # Step 2: Select CHC/UPHC
+        select_angular_dropdown("Select CHC/UPHC", CHC)
+        
+        # Step 3: Handle "Is SHC Directly Connected to CHC/UPHC?"
+        select_angular_dropdown("Is SHC Directly Connected", "Yes")
+        
+        # Step 4: Select SHC/AAM
+        select_angular_dropdown("Select SHC/AAM", "SHC KARAMPUR")
+
+        # 1. Select the Employee Radio Button Card
+        # Locates the container card by the specific employee's name text
+        employee_name = "Heenam Kushwaha"  # Change to the target employee
+        employee_xpath = f"//*[contains(text(), '{employee_name}')]"
+        
+        employee_label = wait.until(EC.element_to_be_clickable((By.XPATH, employee_xpath)))
+        employee_label.click()
+        print(f"Selected employee: {employee_name}")
+
+        # To click the pink/red "X" close button:
+        close_button = driver.find_element(By.XPATH, "//button[@aria-label='Close installation prompt']")
+        close_button.click()
+
+        # 2. Confirm "Login with Password" Tab is Selected
+        # Clicks the tab option if it isn't set by default
+        password_tab = wait.until(EC.element_to_be_clickable((By.XPATH, "//button[contains(., 'Login with Password')] | //div[contains(text(), 'Login with Password')]")))
+        password_tab.click()
+
+        # 3. Fill Password Field
+        password_field = wait.until(EC.presence_of_element_located((By.XPATH, "//input[@type='password' or @placeholder='Password']")))
+        password_field.clear()
+        password_field.send_keys("Karampur@123")
+
+        # 4. Handle Captcha Input Field
+        # Locates the input element associated with the visual label "Captcha"
+        captcha_field = wait.until(EC.presence_of_element_located((By.XPATH, "//input[contains(@placeholder, 'Captcha')] | //input[@name='captcha']")))
+
+        # Note: Automated captcha breaking requires an OCR service. 
+        # For testing, you can pause execution here to type it manually:
+        captcha_code = input("Please look at the browser window and type the displayed Captcha code: ")
+        captcha_field.send_keys(captcha_code)
+
+        # Locate the precise button using the exact text inside the inner tag
+        login_btn = driver.find_element(By.XPATH, "//button[span[text()='Login']]")
+
+        # Force execution bypassing DOM layout restrictions
+        driver.execute_script("arguments[0].click();", login_btn)
+        print("Login button forcefully clicked via JS.")
+
+        # Login Completed, Select Program
+
+        leprosy_program_btn = wait.until(EC.presence_of_element_located((
+            By.XPATH, "//*[normalize-space(.)='Go to Leprosy Abhiyan']"
+        )))
+
+        # Force the click via JavaScript to completely bypass any Angular Material 
+        # click interception layers or animation delays.
+        driver.execute_script("arguments[0].click();", leprosy_program_btn)
+
+
+        mySleepFunction(5)
+        # Locates the specific calendar grid cell for the 1st
+        # by isolating elements that contain the literal text block "1"
+        date_xpath = (
+            "//div[contains(@class, 'calendar')]//*[text()='1'] | "
+            "//span[text()='1'] | "
+            "//*[normalize-space(text())='1']"
+        )
+        
+        # Wait until the cell element is visible and ready to be tapped
+        date_element = wait.until(EC.element_to_be_clickable((By.XPATH, date_xpath)))
+        date_element.click()
+        print("Successfully selected September 2nd.")
+
+        # Locates the "Go to Entry Page" button using text-based matching
+        entry_page_xpath = (
+            "//button[contains(., 'Go to Entry Page')] | "
+            "//a[contains(., 'Go to Entry Page')] | "
+            "//*[text()='Go to Entry Page']"
+        )
+        
+        # Wait up to 10 seconds for the button to be visible and clickable
+        entry_page_btn = wait.until(EC.element_to_be_clickable((By.XPATH, entry_page_xpath)))
+        entry_page_btn.click()
+        print(f"Successfully clicked 'Go to Entry Page' button.line: {sys._getframe().f_lineno}")
+
+
+
+
+        # 1. Locate and click the Angular dropdown menu container
+        dropdown_xpath = "//mat-select[contains(., 'Select Village')] | //div[contains(text(), 'Select Village')] | //mat-form-field[contains(., 'Select Village')]"
+        dropdown = wait.until(EC.element_to_be_clickable((By.XPATH, dropdown_xpath)))
+        dropdown.click()
+        print(f"Dropdown opened.line: {sys._getframe().f_lineno}")
+
+        # 2. Wait for the overlay option panel to pop up and click the targeted choice
+        option_xpath = f"//mat-option[contains(., '{target_village}')] | //span[contains(@class, 'mat-option-text') and contains(text(), '{target_village}')]"
+        option = wait.until(EC.element_to_be_clickable((By.XPATH, option_xpath)))
+        option.click()
+        print(f"Selected village: {target_village} (line: {sys._getframe().f_lineno})")
+        
+        # 3. Locate and click the "Continue" button
+        # Using text matching helps isolate it even if it changes from disabled to active state
+        continue_btn_xpath = "//button[contains(., 'Continue')] | //span[contains(text(), 'Continue')]/ancestor::button"
+        continue_btn = wait.until(EC.element_to_be_clickable((By.XPATH, continue_btn_xpath)))
+        continue_btn.click()
+        print(f"Successfully clicked 'Continue'. (line: {sys._getframe().f_lineno})")
+
+        # Replace this list with your actual target Ration Card numbers
+        ration_cards = ['226480038755', '226480236703', '226480395454', '226480510848', '226480560454', '226480579269', '226481090505', '226481182917', '226481513084', '226481581368', '226481702137', '226481823778', '226482030088', '226482369270', '226482434783', '226482442683', '226482556713', '226482742327', '226483732393', '226484490348', '226484528022', '226484812710', '226484986145', '226485109674', '226485272244', '226485441522', '226485712817', '226485939079', '226486302662', '226486512843', '226486644132', '226486752325', '226486862022', '226486895905', '226486928706', '226487633129', '226487978472', '226488233469', '226488500948', '226489069242', '226489115964', '226489164725', '226489185813', '226489296111', '226489362681', '226489388737', '226489450004', '226489604757', '226489613005', '226489884304', '223892370105', '223897871405', '226480031517', '226480034561', '226480091339', '226480169385', '226480178935', '226480253750', '226480332683', '226480380758', '226480402327', '226480532823', '226480559708', '226480566770', '226480715177', '226480736656', '226480757505', '226480792602', '226480844224', '226480965039', '226480982051', '226481100365', '226481134214', '226481207199', '226481215991', '226481321883', '226481326055', '226481344505', '226481346040', '226481424200', '226481522342', '226481538550', '226481545838', '226481566110', '226481577068', '226481588012', '226481595104', '226481600625', '226481601902', '226481625896', '226481668306', '226481711664', '226481720368', '226481744310', '226481778048', '226481795043', '226481867762', '226481885274', '226481954300', '226482027430', '226482041934', '226482074963', '226482100750', '226482141009', '226482142741', '226482316920', '226482356677', '226482440763', '226482503630', '226482508253', '226482540326', '226482583549', '226482584180', '226482620185', '226482637692', '226482684567', '226482700029', '226482712671', '226482750896', '226482766352', '226482778612', '226482817646', '226482886112', '226482937518', '226482941626', '226482958853', '226482993257', '226483045993', '226483067581', '226483177221', '226483217426', '226483242613', '226483309569', '226483316496', '226483322124', '226483348202', '226483403019', '226483453031', '226483500791', '226483610829', '226483648948', '226483718909', '226483727694', '226483803394', '226483811038', '226483850000', '226483857596', '226483934705', '226483943841', '226483975618', '226484033770', '226484093277', '226484097692', '226484177805', '226484184201', '226484237243', '226484256418', '226484274521', '226484310902', '226484318372', '226484339636', '226484405532', '226484456304', '226484468151', '226484596328', '226484604325', '226484627308', '226484639628', '226484639661', '226484648024', '226484661436', '226484676692', '226484699652', '226484725428', '226484727931', '226484765825', '226484773687', '226484810008', '226484832284', '226484853722', '226484861606', '226484867518', '226484993601', '226485032814', '226485053704', '226485071162', '226485091798', '226485101756', '226485214693', '226485248538', '226485249095', '226485374513', '226485382112', '226485385599', '226485390111', '226485408854', '226485420362', '226485426867', '226485430022', '226485439311', '226485484260', '226485530010', '226485550321', '226485561543', '226485561626', '226485567223', '226485591533', '226485640069', '226485687703', '226485715143', '226485721750', '226485726734', '226485788510', '226485788519', '226485820463', '226485843001', '226485852976', '226485925625', '226486010031', '226486166169', '226486171707', '226486206536', '226486220272', '226486251024', '226486261520', '226486300886', '226486307969', '226486331339', '226486375701', '226486421014', '226486422633', '226486425909', '226486434139', '226486437446', '226486459261', '226486462432', '226486479463', '226486506282', '226486515258', '226486540918', '226486570249', '226486571319', '226486572755', '226486588079', '226486591886', '226486596582', '226486622609', '226486659320', '226486747568', '226486766616', '226486773417', '226486809225', '226486815885', '226486849940', '226486893087', '226486960328', '226486995452', '226487005561', '226487009498', '226487034206', '226487095289', '226487163297', '226487189442', '226487265462', '226487292403', '226487305499', '226487325738', '226487329651', '226487334857', '226487350386', '226487362043', '226487391586', '226487392864', '226487415995', '226487483688', '226487534505', '226487599762', '226487636756', '226487643719', '226487668447', '226487702541', '226487726654', '226487746497', '226487810283', '226487836486', '226487853389', '226487884748', '226487895630', '226487948273', '226488004426', '226488020783', '226488068576', '226488071191', '226488075757', '226488085771', '226488119267', '226488142109', '226488160111', '226488205151', '226488245752', '226488274585', '226488279548', '226488369066', '226488570162', '226488627270', '226488639013', '226488639301', '226488763377', '226488774267', '226488801596', '226488835742', '226488849833', '226488938292', '226488968715', '226488974119', '226488985875', '226488999959', '226489046037', '226489078879', '226489113428', '226489149434', '226489151998', '226489153861', '226489158105', '226489176315', '226489296552', '226489345867', '226489373646', '226489411363', '226489421029', '226489492958', '226489519031', '226489547183', '226489549528', '226489604565', '226489680993', '226489696043', '226489704493', '226489789580', '226489794067', '226489810154', '226489817095', '226489852587', '226489867768', '226489899543', '226489935833', '226489950013', '226489969370', '226489979480', '226489989628', '226489993742', '226481426963', '226481691606', '226482397851', '226483029650', '226483511210', '226485434311', '226485626800', '226486066434', '226486293507', '226486452958', '226486759467', '226486905359', '226487119944', '226488162714', '226488447948', '226488874095', '226489827233', '226489159371']
+        round_complete = False
+        for card_number in ration_cards:
+            
+            ret = check_date_and_village_set()
+            print(f"Executing sequence for card entry: {card_number}")
+            logging.info(f"Opening:  {card_number}")
+            try:
+                # Targets the input field directly associated with the ID card icon,
+                # explicitly avoiding any date picker fields containing calendar icons.
+                if (ret == False):
+                    print(f"Date and Village fields were not set correctly. Re-injecting values for card: {card_number} (line: {sys._getframe().f_lineno})")
+                    #check_date_and_village_set()
+                    input_xpath = (
+                        "//input[@type='text' and not(ancestor::mat-form-field[.//mat-datepicker-toggle]) and not(contains(@placeholder, 'Date'))]"
+                        " | //mat-label[contains(., 'Card') or contains(., 'ABHA')]/ancestor::mat-form-field//input"
+                        " | (//mat-form-field//input)[last()]"
+                    )
+                
+                    # Wait until the true search input field is present
+                    search_field = wait.until(EC.presence_of_element_located((By.XPATH, input_xpath)))
+                    
+                    # Inject values directly using JavaScript to prevent calendar overlays from popping up
+                    # Inject values directly into the input using the proper indexed arguments
+                    driver.execute_script("arguments[0].value = arguments[1];", search_field, card_number)
+                    driver.execute_script("arguments[0].dispatchEvent(new Event('input', { bubbles: true }));", search_field)
+                    driver.execute_script("arguments[0].dispatchEvent(new Event('change', { bubbles: true }));", search_field)
+
+                    print(f"Card number successfully injected into the correct Search box. (line: {sys._getframe().f_lineno})")
+                
+                # 1. Broadly target the search button card using text and style classes
+                search_btn_xpath = (
+                    "//button[@type='submit' or contains(., 'Search')]"
+                    " | //mat-form-field//following::button[contains(., 'Search')]"
+                    " | //span[contains(text(), 'Search')]/ancestor::button"
+                    " | //button[contains(@class, 'mat-focus-indicator') and contains(., 'Search')]"
+                )
+                
+                # 2. Wait until the button is present in the DOM layout
+
+                search_btn = wait.until(EC.presence_of_element_located((By.XPATH, search_btn_xpath)))
+                
+                # 3. Clean click execution strategy
+
+                # Try a standard driver click first to allow Angular event bubbles to fire naturally
+                search_btn.click()
+                print(f"Search Member of Ration Card. (line: {sys._getframe().f_lineno})")
+
+                #Screening Logic will go here$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+                # Find all active "Select" buttons in the table
+                # This uses a partial text match or exact match on the text inside the button/link
+             
+                try:
+                    # 1. Check if the "Ayushman Card Not Found" popup appears (waits up to 3 seconds)
+                    popup_header = WebDriverWait(driver, 3).until(
+                        EC.presence_of_element_located((By.XPATH, "//*[contains(text(), 'Ayushman Card Not Found')]"))
+                    )
+                    
+                    print(f"Popup encountered: Ayushman Card Not Found for card {card_number}. Dismissing and skipping. (line: {sys._getframe().f_lineno})")
+                    #logging.warning(f"Ayushman Card Not Found for card: {card_number}")
+
+                    # 2. Locate and click the 'OK' button to dismiss the modal
+                    # Using a text match on the purple button text 'OK'
+                    ok_button = driver.find_element(By.XPATH, "//button[contains(text(), 'OK')] | //*[text()='OK']")
+                    ok_button.click()
+                    
+                    # 3. Wait briefly for the modal backdrop overlay to disappear before continuing the loop
+                    WebDriverWait(driver, 3).until(EC.staleness_of(popup_header))
+                    
+                    # 4. Skip the rest of the current iteration and move to the next member/card
+                    continue
+
+                except TimeoutException:
+                    # No popup appeared within 3 seconds, proceed normally with the form actions
+                    pass
+
+                identification_header = driver.find_elements(By.XPATH, "//*[contains(text(), 'Identification Details')]")
+                if len(identification_header) > 0:
+                    print(f"Identification Details section is already visible on the screen: {card_number} line: {sys._getframe().f_lineno}")
+                    logging.info("Bypassed select buttons loop because Identification Details container is active.")
+                    
+                    for_single()
+                    
+                    try:
+                        abha_field = driver.find_element(By.XPATH, "//mat-form-field[contains(., 'Abha Id')]//input")
+                        abha_id_value = abha_field.get_attribute("value")
+                        print(f"Abha ID found for card {card_number}: {abha_id_value} line: {sys._getframe().f_lineno}")
+                        # # CHANGE HERE: Skip the loop if it is NOT present
+                        # if not abha_id_value or not abha_id_value.strip():
+                        #     print(f"Abha ID is missing for card {card_number}. Skipping next steps.")
+                        #     continue  
+                            
+                    except Exception as e:
+                        #logging.warning(f"Could not read Abha ID field: {str(e)}")
+                        # If the field can't be found, it's not present, so we skip
+                        continue
+                else:
+                    wait.until(EC.presence_of_element_located((By.CLASS_NAME, "custom-table")))
+                    # Target the buttons precisely using the class name 'action-btn' shown in your HTML
+                    select_buttons = driver.find_elements(By.CSS_SELECTOR, "button.action-btn")
+                    total_buttons = len(select_buttons)
+
+                    print(f"Found {total_buttons} matching 'Select' buttons. line: {sys._getframe().f_lineno}")
+                    logging.info(f"Member in :  {card_number} : {total_buttons}")
+
+                counter = 0
+                
+                for i in range(total_buttons):
+                    print(f"Processing Select button #{i + 1} of {total_buttons} for card {card_number}. line: {sys._getframe().f_lineno}")
+                    
+                    try:
+                        #Second time date of visit, village has to be set and search again
+                        if counter > 0:
+                            #1. Wait for global Angular loader to disappear completely
+                            wait.until(EC.invisibility_of_element_located((By.TAG_NAME, "app-loader")))
+
+                            # 2. Input Planned Visit Date via JavaScript execution
+                            # (This bypasses click interceptions if the read-only or overlay blocks standard input typing)
+                            date_input = wait.until(EC.presence_of_element_located((By.XPATH, "//input[contains(@placeholder, 'Visit Date')] | //mat-form-field[contains(., 'Visit Date')]//input")))
+                            driver.execute_script("arguments[0].value = arguments[1];", date_input, target_date)
+                            # Trigger standard input/change events so Angular detects the value update
+                            driver.execute_script("arguments[0].dispatchEvent(new Event('input', { bubbles: true }));", date_input)
+                            #driver.execute_script("arguments[0].dispatchEvent(new Event('change', { bubbles: True }));", date_input)
+                            print(f"Set planned visit date to: {target_date}")
+
+                            # # 4. Handle Option Selection using your expanded XPATH pattern with case-insensitive matching
+                            # option_xpath = f"//mat-option[contains(translate(., 'BALRAMPUR', 'Balrampur'), '{target_village.lower()}')] | //mat-option//span[contains(translate(text(), 'BALRAMPUR', 'Balrampur'), '{target_village.lower()}')]"
+                            # option = wait.until(EC.element_to_be_clickable((By.XPATH, option_xpath)))
+                            # option.click()
+                            # print(f"Selected village: {target_village} line: {sys._getframe().f_lineno}")
+                            
+                            # # # 3. Open Village Dropdown Panel
+                            # print(f"Attempting to select village: {target_village} (Line: {sys._getframe().f_lineno})")
+                            # village_dropdown = wait.until(EC.element_to_be_clickable((By.XPATH, "//mat-select | //mat-form-field[contains(., 'Village')]//mat-select")))
+                            # village_dropdown.click()
+                            # print(f"Village dropdown opened (Line: {sys._getframe().f_lineno})")
+
+                            # # 4. Handle Option Selection using your expanded XPATH pattern with case-insensitive matching
+                            # print(f"Attempting to select village: {target_village} (Line: {sys._getframe().f_lineno})")
+                            # option_xpath = f"//mat-option[contains(translate(., 'BALRAMPUR', 'Balrampur'), '{target_village.lower()}')] | //mat-option//span[contains(translate(text(), 'BALRAMPUR', 'Balrampur'), '{target_village.lower()}')]"
+                            # option = wait.until(EC.element_to_be_clickable((By.XPATH, option_xpath)))
+                            # option.click()
+                            # print(f"Selected village: {target_village} line: {sys._getframe().f_lineno}")
+                            UPPER = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                            LOWER = "abcdefghijklmnopqrstuvwxyz"
+                            target_lower = target_village.lower()
+
+                            try:
+                                # 1. CLICK THE DROPDOWN CONTAINER TO OPEN IT
+                                # Targets the exact mat-select element visible in your DOM panel
+                                dropdown_xpath = "//mat-select[@formcontrolname='visite_village_code']"
+                                dropdown = wait.until(EC.element_to_be_clickable((By.XPATH, dropdown_xpath)))
+                                
+                                # Scroll the dropdown container into view first and click it
+                                driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", dropdown)
+                                time.sleep(0.5) # Brief pause for layout stability
+                                dropdown.click()
+                                
+                                # 2. WAIT FOR THE OPTIONS OVERLAY TO APPAER AND SELECT THE VILLAGE
+                                # Uses normalize-space(.) instead of text() to ignore layout tags
+                                option_xpath = (
+                                    f"//mat-option[contains(translate(normalize-space(.), '{UPPER}', '{LOWER}'), '{target_lower}')] | "
+                                    f"//mat-option//span[contains(translate(normalize-space(.), '{UPPER}', '{LOWER}'), '{target_lower}')]"
+                                )
+                                
+                                # Wait until the option is fully clickable in the newly opened overlay panel
+                                option = wait.until(EC.element_to_be_clickable((By.XPATH, option_xpath)))
+                                
+                                # Scroll the target option into view (Crucial for long dropdown lists)
+                                driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", option)
+                                time.sleep(0.3)
+                                
+                                # Click the option to properly satisfy Angular's form validation
+                                option.click()
+                                print(f"Successfully selected village: {target_village} line: {sys._getframe().f_lineno}")
+
+                            except Exception as e:
+                                print(f"Failed to select village '{target_village}' at line {sys._getframe().f_lineno}")
+                                print(f"Error Details: {type(e).__name__} - {e}")
+                                raise e
+                            
+
+                             # 1. Broadly target the search button card using text and style classes
+                            search_btn_xpath = (
+                                "//button[@type='submit' or contains(., 'Continue')]"
+                                " | //mat-form-field//following::button[contains(., 'Continue')]"
+                                " | //span[contains(text(), 'Continue')]/ancestor::button"
+                                " | //button[contains(@class, 'mat-focus-indicator') and contains(., 'Continue')]"
+                            )
+                            
+                            # 2. Wait until the button is present in the DOM layout
+                            search_btn = wait.until(EC.presence_of_element_located((By.XPATH, search_btn_xpath)))
+                            
+                            # Try a standard driver click first to allow Angular event bubbles to fire naturally
+                            search_btn.click()
+
+                            input_xpath = (
+                                "//input[@type='text' and not(ancestor::mat-form-field[.//mat-datepicker-toggle]) and not(contains(@placeholder, 'Date'))]"
+                                " | //mat-label[contains(., 'Card') or contains(., 'ABHA')]/ancestor::mat-form-field//input"
+                                " | (//mat-form-field//input)[last()]"
+                            )
+                            
+                            # Wait until the true search input field is present
+                            search_field = wait.until(EC.presence_of_element_located((By.XPATH, input_xpath)))
+                            
+                            # Inject values directly using JavaScript to prevent calendar overlays from popping up
+                            # Inject values directly into the input using the proper indexed arguments
+                            driver.execute_script("arguments[0].value = arguments[1];", search_field, card_number)
+                            driver.execute_script("arguments[0].dispatchEvent(new Event('input', { bubbles: true }));", search_field)
+                            driver.execute_script("arguments[0].dispatchEvent(new Event('change', { bubbles: true }));", search_field)
+
+                            print(f"Card number successfully injected into the correct Search box. (line: {sys._getframe().f_lineno})")
+                            
+                            # 1. Broadly target the search button card using text and style classes
+                            search_btn_xpath = (
+                                "//button[@type='submit' or contains(., 'Search')]"
+                                " | //mat-form-field//following::button[contains(., 'Search')]"
+                                " | //span[contains(text(), 'Search')]/ancestor::button"
+                                " | //button[contains(@class, 'mat-focus-indicator') and contains(., 'Search')]"
+                            )
+                            
+                            # 2. Wait until the button is present in the DOM layout
+
+                            search_btn = wait.until(EC.presence_of_element_located((By.XPATH, search_btn_xpath)))
+                            
+                            # 3. Clean click execution strategy
+
+                            # Try a standard driver click first to allow Angular event bubbles to fire naturally
+                            search_btn.click()
+                            print(f"Standard browser search button click executed. (line: {sys._getframe().f_lineno})")
+
+
+
+
+                        # Re-fetch the elements inside the loop to ensure they are fresh
+                        buttons = driver.find_elements(By.CSS_SELECTOR, "button.action-btn")
+                        current_button = buttons[i]
+                        
+                        # Scroll the specific button into view before interacting
+                        driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", current_button)
+                        time.sleep(0.5)
+                        
+                        print(f"Clicking Select button #{i + 1}... (line: {sys._getframe().f_lineno})")
+                        
+                        # Use a reliable JavaScript click to bypass overlapping Angular components or overlay layers
+                        driver.execute_script("arguments[0].click();", current_button)
+
+                        # Initialize the flag tracker at the start of each loop iteration
+                        screening_already_done = False
+
+                        try:
+                            # 1. Target the explicit SweetAlert container that is open on your screen
+                            print(f"Checking for active SweetAlert warning layout... (line: {sys._getframe().f_lineno})")
+                            swal_modal = WebDriverWait(driver, 3).until( # from 5 to 10
+                                EC.presence_of_element_located((By.CLASS_NAME, "swal2-modal"))
+                            )
+                            
+                            # Verify the specific error message is inside the modal header
+                            if "Screening Already Done" in swal_modal.text:
+                                print(f"⚠️ Match found: 'Screening Already Done' alert verified. (line: {sys._getframe().f_lineno})")
+                                
+                                # 2. Locate the precise SweetAlert confirm button using its dedicated library class
+                                ok_btn = WebDriverWait(driver, 3).until(
+                                    EC.element_to_be_clickable((By.CSS_SELECTOR, "button.swal2-confirm"))
+                                )
+                                
+                                # 3. Force click via JavaScript to bypass any backdrop focus lock layers
+                                driver.execute_script("arguments[0].click();", ok_btn)
+                                print(f"SweetAlert 'OK' button successfully clicked. (line: {sys._getframe().f_lineno})")
+                                
+                                # # 4. Wait for the SweetAlert dark backdrop container to leave the DOM hierarchy entirely
+                                # WebDriverWait(driver, 3).until( # from 5 to 10
+                                #     EC.invisibility_of_element_located((By.CLASS_NAME, "swal2-container"))
+                                # )
+                                WebDriverWait(driver, 5).until(
+                                    EC.invisibility_of_element_located((By.CLASS_NAME, "swal2-modal"))
+                                )
+
+
+
+
+                                # 4. Wait for the SweetAlert dark backdrop container to leave the DOM hierarchy entirely
+                                # swal_container = driver.find_element(By.CLASS_NAME, "swal2-container")
+                                # WebDriverWait(driver, 5).until(EC.staleness_of(swal_container))
+
+                                print(f"Modal faded out. Workspace cleared. (line: {sys._getframe().f_lineno})")
+                                
+                                # Flip our loop bypass flag to True
+                                screening_already_done = True
+
+                        except Exception as e:
+                            # If the modal doesn't exist, this block catch routes seamlessly into the normal flow
+                            print(f"No active validation alert container intercepted line: {sys._getframe().f_lineno}. Continuing with normal form actions...")
+
+                        # --- THE CRITICAL CONDITIONAL SKIP ---
+                        if screening_already_done:
+                            print(f"Skipping remaining form fields. Routing directly back to the next loop iteration... (line: {sys._getframe().f_lineno})")
+                            #logging.info(f"screening already done for {card_number}: {i}")
+                            continue  # Breaks the current execution string and pulls the next record smoothly
+
+                        # --- REST OF FORM SUBMISSION ROUTINE CONTINUES BELOW ---
+                        print(f"Proceeding with normal report creation actions... (line: {sys._getframe().f_lineno})")
+
+                        try:
+                            abha_input_element = WebDriverWait(driver, 5).until(
+                                EC.presence_of_element_located((By.XPATH, "//input[@formcontrolname='abhaId']"))
+                            )
+                            abha_id_value = abha_input_element.get_attribute("value")
+                            
+                            # # CHANGE HERE: Skip the loop if it is NOT present
+                            # if not abha_id_value or not abha_id_value.strip():
+                            #     print(f"Abha ID is missing for card {card_number}. Skipping next steps.")
+                            #     clear_search_btn = driver.find_element(By.XPATH, "//button[contains(., 'Search')]/following-sibling::button[contains(., 'Clear')]")
+                            #     clear_search_btn.click()
+                            if abha_id_value and abha_id_value.strip():
+                                print(f"Abha ID is populated: {abha_id_value}")
+                                #logging.info(f"Abha ID found for member: {abha_id_value}")
+                                # Add your loop skip or 'continue' logic here if needed
+                                
+                            else:
+                                print("Abha ID field is empty/blank.")
+                                clear_search_btn = driver.find_element(By.XPATH, "//button[contains(., 'Search')]/following-sibling::button[contains(., 'Clear')]")
+                                clear_search_btn.click()
+                                search_btn_xpath = (
+                                    "//button[@type='submit' or contains(., 'Search')]"
+                                    " | //mat-form-field//following::button[contains(., 'Search')]"
+                                    " | //span[contains(text(), 'Search')]/ancestor::button"
+                                    " | //button[contains(@class, 'mat-focus-indicator') and contains(., 'Search')]"
+                                )
+                                
+                                # 2. Wait until the button is present in the DOM layout
+                                search_btn = wait.until(EC.presence_of_element_located((By.XPATH, search_btn_xpath)))
+                                # 3. Clean click execution strategy
+                                # Try a standard driver click first to allow Angular event bubbles to fire naturally
+                                search_btn.click()
+                                #logging.info("Abha ID is not populated. Proceeding with form execution.")
+                                # Add your form entry/generation logic here
+                                continue
+                                
+                        except Exception as e:
+                            print(f"Error while checking Abha ID field: {e} line: {sys._getframe().f_lineno}")
+                            # If the field can't be found, it's not present, so we skip
+
+
+                        try:
+                           # Wait up to 10 seconds for the SweetAlert OK button to be clickable
+                            ok_button = WebDriverWait(driver, 10).until(
+                            EC.element_to_be_clickable((By.CSS_SELECTOR, "button.swal2-confirm"))
+                            )
+                            ok_button.click()
+                            print("Popup closed successfully.")
+                            continue
+                        except Exception as e:
+                            print(f"Failed to close popup: {e} line: {sys._getframe().f_lineno}")
+
+                        time.sleep(1) 
+                        #####################################
+                        try:
+                            print(f"screening for {card_number}: {i}")
+                            # ----------------------------------------------------
+                            # 1. Select "No" in the "Belongs to PVTG Category" Dropdown
+                            # ----------------------------------------------------
+                            # Locate and click the PVTG dropdown container to expand the options
+                            select_angular_dropdown("Belongs to PVTG Category", "No")
+                            time.sleep(0.5)
+                            
+                            # Wait for the option list overlay to appear and click "No"
+                            select_angular_dropdown("Suspected", "No")
+                            
+                            # Small pause to let the overlay close cleanly
+                            time.sleep(0.5)
+
+                            #select_angular_dropdown("गर्भवती / स्तनपान कराने वाली", "No")
+                            try:
+                                # 1. 3 सेकंड का एक छोटा वेट लगाएँ ताकि चेक किया जा सके कि dropdown स्क्रीन पर मौजूद है या नहीं
+                                dropdown_label = "गर्भवती / स्तनपान कराने वाली"
+                                select_xpath = f"//mat-select[contains(normalize-space(.), '{dropdown_label}')] | //div[contains(normalize-space(.), '{dropdown_label}')]//mat-select"
+                                
+                                # यदि element दिखाई देता है, तो इसे variable में स्टोर करें
+                                is_visible = WebDriverWait(driver, 5).until( #from 3 to 10
+                                    EC.presence_of_element_located((By.XPATH, select_xpath))
+                                )
+                                
+                                # 2. केवल element मिलने पर ही फ़ंक्शन को कॉल करें
+                                select_angular_dropdown("गर्भवती / स्तनपान कराने वाली", "No")
+                                print("गर्भवती / स्तनपान कराने वाली dropdown सफलतापूर्वक सेट कर दिया गया है।")
+
+                            except Exception as e   :
+                                # अगर element 3 सेकंड में नहीं मिलता, तो script बिना क्रैश हुए इसे छोड़ देगी
+                                print(f"गर्भवती / स्तनपान कराने वाली dropdown स्क्रीन पर दिखाई नहीं दिया। आगे बढ़ रहे हैं... (line: {sys._getframe().f_lineno})")
+
+                            
+                            time.sleep(0.5)
+
+                            # ----------------------------------------------------
+                            # 3. Tick the Consent Checkbox
+                            # ----------------------------------------------------
+                            # Target the inner invisible input or the mat-checkbox label component
+                            # 1. Locate the checkbox element safely using dynamic layout variations
+                            checkbox = wait.until(EC.presence_of_element_located((
+                                By.XPATH, "//mat-checkbox//input[@type='checkbox'] | //mat-checkbox | //input[@type='checkbox']"
+                            )))
+
+                            # 2. Scroll to the element to make sure it is in view
+                            driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", checkbox)
+
+                            # 3. Force the click event via JavaScript to avoid element click intercepted errors
+                            driver.execute_script("arguments[0].click();", checkbox)
+
+                            # ----------------------------------------------------
+                            # 4. Upload a Dummy Picture
+                            # ----------------------------------------------------
+                            # --- 1. File Upload Phase ---
+                            dummy_image_path = os.path.abspath("temp_placeholder.jpg")
+                            if not os.path.exists(dummy_image_path):
+                                with open(dummy_image_path, "wb") as f:
+                                    f.write(b"\xFF\xD8\xFF\xE0\x00\x10JFIF\x00\x01\x01\x01\x00`\x00`\x00\x00\xFF\xDB\x00C\x00\x08\x06\x06\x07\x06\x05\x08\x07\x07\x07\t\t\x08\n\x0C\x14\r\x0C\x0B\x0B\x0C\x19\x12\x13\x0F\x14\x1D\x1A\x1F\x1E\x1D\x1A\x1C\x1C $.' \",#\x1C\x1C(7),01444\x1F'9=82<.342\xFF\xC0\x00\x0B\x08\x00\x01\x00\x01\x01\x01\x11\x01\xFF\xC4\x00\x15\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xDA\x00\x0C\x01\x01\x00\x00\x3F\x00\xB2\xC0\xFF\xD9")
+
+                            # Target the hidden browser file channel input directly
+                            photo_input = driver.find_element(By.XPATH, "//input[@type='file']")
+                            photo_input.send_keys(dummy_image_path)
+                            print(f"Placeholder photo successfully routed to file stream. (line: {sys._getframe().f_lineno})")
+
+                            # --- 2. Corrected Synchronization Wait ---
+                            # Use the global 'wait' object instance to keep timeout metrics uniform.
+                            # This explicitly waits for the image rendering preview frame to appear in the container layout.
+                            wait.until(EC.presence_of_element_located((
+                                By.XPATH, "//div[contains(@class, 'image')]//img | //img[not(@id) and @src] | //*[contains(@class, 'preview')]"
+                            )))
+                            print(f"Form validation refreshed: Photo preview detected. (line: {sys._getframe().f_lineno})")
+
+                            # --- 3. Click Execution ---
+                            submit_btn = wait.until(EC.presence_of_element_located((
+                                By.XPATH, "//button[contains(normalize-space(.), 'Submit Leprosy Report')]"
+                            )))
+                            driver.execute_script("arguments[0].click();", submit_btn)
+                            print(f"Form submission executed successfully. (line: {sys._getframe().f_lineno})")
+
+
+                            # 1. Explicitly wait until the SweetAlert confirm button is interactive on the screen viewport
+                            yes_save_btn = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, "button.swal2-confirm")))
+                            
+                            # 2. Execute the click using JavaScript to guarantee execution through the backdrop fade overlay
+                            driver.execute_script("arguments[0].click();", yes_save_btn)
+                            print(f"Confirmation modal 'Yes, Save' button successfully clicked. (line: {sys._getframe().f_lineno})")
+
+                            mySleepFunction(3)
+                            try:
+                                # 1. Target the button via its unique SweetAlert confirmation class
+                                success_ok_btn = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, "button.swal2-confirm")))
+                                
+                                # 2. Fix: Corrected syntax using arguments[0] to run the native browser click track
+                                driver.execute_script("arguments[0].click();", success_ok_btn)
+                                print(f"Success popup 'OK' button clicked via corrected JS call. (line: {sys._getframe().f_lineno})")
+
+                            except Exception:
+                                # Fallback Option: If the overlay layer blocks it, move the real pointer directly to the center and click
+                                print(f"JavaScript click fallback initiated... Attempting Actions API click for 'OK' button. (line: {sys._getframe().f_lineno})")
+                                success_ok_btn = driver.find_element(By.CSS_SELECTOR, "button.swal2-confirm")
+                                ActionChains(driver).move_to_element(success_ok_btn).click().perform()
+                                print(f"Success popup 'OK' button forcefully clicked via Actions API. (line: {sys._getframe().f_lineno})")
+
+                            # 3. Synchronize thread layout: Wait for the SweetAlert backdrop container to leave the view entirely
+                            # wait.until(EC.invisibility_of_element_located((By.CLASS_NAME, "swal2-container")))
+                            # print("Success modal cleared. Main form view is ready for the next iteration.")
+                            
+
+
+
+                            print(f"Form population completed successfully. line: {sys._getframe().f_lineno}")
+                            if i < total_buttons:
+                                counter = counter + 1
+                                continue
+
+                        except Exception as e: # inner exception of option No, No, & photo upload
+                            print(f"An error occurred during automation: {e} line: {sys._getframe().f_lineno}")
+
+                       
+
+
+#####################################
+
+                    except Exception as e:
+                        print(f"Error clicking button #{i + 1}: {e} line: {sys._getframe().f_lineno}")
+                        
+                        # Note: If clicking a button causes a full page reload or changes the DOM structure, 
+                        # you will need to re-fetch the element list inside the loop to avoid StaleElementReferenceException.
+                        
+                    except Exception as e:
+                        print(f"Could not click button #{1}: {e} line: {sys._getframe().f_lineno}")
+
+                time.sleep(3)
+                #Screening Logic will go here$$$$$$$$$$$$$$$$$$$$$$$$$$$$                
+
+            except Exception as e: # exception of ration card for loop
+                print(f"Pipeline crashed for card: {card_number} with error: {e} line: {sys._getframe().f_lineno}")
+                
+
+    except Exception as e: # exception of login function
+        print(f"An error occurred while filling the form: {e} line: {sys._getframe().f_lineno}")
+
+
+
+
+# start executing
+login()
