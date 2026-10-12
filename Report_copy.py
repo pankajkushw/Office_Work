@@ -400,13 +400,13 @@ def Copy_All_Data():
 
 # excution starts here
 ##########################################################################################################
-base_path = Path("E:\\Office\\000Reports\\0000Sep2026\\05102026")
+base_path = Path("E:\\Office\\000Reports\\0000Oct2026\\12102026")
 
 # 1. Make 'raw_file_path' and 'backup_folder' use Path logic instead of string logic
 raw_file_path = Path("portalData")
 converted_folder = base_path.joinpath("converted_data") # Joins 'converted_data' to your main directory path
 
-base_file = "PMAYG-ProgressReport_28092026_To_05102026.xlsx"
+base_file = "PMAYG-ProgressReport_05102026_To_12102026.xlsx"
 
 # 2. Combine the paths properly using Path objects
 report_file = base_path.joinpath(base_file)
