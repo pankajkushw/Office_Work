@@ -584,25 +584,36 @@ def login():
                             # --- 1. File Upload Phase ---
  
 
-                            # 1. Define your clean 1x1 black JPEG byte sequence inside a Python variable
-                            dummy_image_bytes = (
-                                b"\xFF\xD8\xFF\xE0\x00\x10JFIF\x00\x01\x01\x01\x00`\x00`\x00\x00"
-                                b"\xFF\xDB\x00C\x00\x08\x06\x06\x07\x06\x05\x08\x07\x07\x07\t\t"
-                                b"\x08\n\x0C\x14\x28\(\r\\)x0C\x0B\x0B\x0C\x19\x12\x13\x0F\x14\x1D\x1A\x1F"
-                                b"\x1E\x1D\x1A\x1C\x1C\x20\x24\x2E\x27\x20\x22\x2C\x23\x1C\x1C\x28\x37\x29\x2C"
-                                b"\x30\x31\x34\x34\x34\x1F\x27\x39\x3D\x38\x32\x3C\x2E\x33\x34\x32"
-                                b"\xFF\xC0\x00\x0B\x08\x00\x01\x00\x01\x01\x01\x11\x01\xFF\xC4"
-                                b"\x00\x15\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-                                b"\x00\x00\x00\x00\x00\x00\xFF\xDA\x00\x0C\x01\x01\x00\x00\x3F"
-                                b"\x00\xB2\xC0\xFF\xD9"
-                            )
+                            # # 1. Corrected 1x1 black JPEG byte sequence (fixed syntax/escape errors)600-kb
+                            # dummy_image_bytes = (
+                            #     b"\xFF\xD8\xFF\xE0\x00\x10JFIF\x00\x01\x01\x01\x00`\x00`\x00\x00"
+                            #     b"\xFF\xDB\x00C\x00\x08\x06\x06\x07\x06\x05\x08\x07\x07\x07\t\t"
+                            #     b"\x08\n\x0C\x14\x28\x28\x0D\x0C\x0C\x0B\x0B\x0C\x19\x12\x13\x0F\x14\x1D\x1A\x1F"
+                            #     b"\x1E\x1D\x1A\x1C\x1C\x20\x24\x2E\x27\x20\x22\x2C\x23\x1C\x1C\x28\x37\x29\x2C"
+                            #     b"\x30\x31\x34\x34\x34\x1F\x27\x39\x3D\x38\x32\x3C\x2E\x33\x34\x32"
+                            #     b"\xFF\xC0\x00\x0B\x08\x00\x01\x00\x01\x01\x01\x11\x01\xFF\xC4"
+                            #     b"\x00\x15\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+                            #     b"\x00\x00\x00\x00\x00\x00\xFF\xDA\x00\x0C\x01\x01\x00\x00\x3F"
+                            #     b"\x00\xB2\xC0\xFF\xD9"
+                            # )
 
-                            # 2. Convert the byte sequence into a Base64 string
-                            encoded_string = base64.b64encode(dummy_image_bytes).decode('utf-8')
-                            base64_data_url = f"data:image/jpeg;base64,{encoded_string}"
+                            # # --- Phase 1: Real Form Upload (Backend) ---
+                            # # Create a real, local file temporarily so Selenium can send it
+                            # temp_filename = "dummy_upload.jpg"
+                            # with open(temp_filename, "wb") as f:
+                            #     f.write(dummy_image_bytes)
+
+                            # abs_file_path = os.path.abspath(temp_filename)
+
+                            # Find the real hidden file input and send the absolute path
+                            abs_file_path = os.path.abspath("600-kb.jpg")  # Ensure this file exists in your working directory
+
+                            file_input = driver.find_element(By.XPATH, "//input[@type='file']")
+                            file_input.send_keys(abs_file_path)
+                            
+
 
                             # 3. Inject it into the image preview box via JavaScript execution
-                            # This targets the placeholder <img> box seen right beside your capture button
                             js_injection_script = """
                                 var previewImg = document.querySelector(".upload-btn").closest('.row, div').querySelector("img");
                                 if (previewImg) {
@@ -615,6 +626,7 @@ def login():
                             """
 
                             driver.execute_script(js_injection_script, base64_data_url)
+
                             # ----------------------------------------------------
                             # 3. Tick the Consent Checkbox
                             # ----------------------------------------------------
