@@ -89,20 +89,7 @@ def check_date_and_village_set():
         #driver.execute_script("arguments[0].dispatchEvent(new Event('change', { bubbles: True }));", date_input)
         print(f"Set planned visit date to: {target_date} (Line: {sys._getframe().f_lineno})")
 
-        # # # 3. Open Village Dropdown Panel
-        # print(f"Attempting to select village: {target_village} (Line: {sys._getframe().f_lineno})")
-        # village_dropdown = wait.until(EC.element_to_be_clickable((By.XPATH, "//mat-select | //mat-form-field[contains(., 'Village')]//mat-select")))
-        # village_dropdown.click()
-        # print(f"Village dropdown opened (Line: {sys._getframe().f_lineno})")
-
-        # # 4. Handle Option Selection using your expanded XPATH pattern with case-insensitive matching
-        # print(f"Attempting to select village: {target_village} (Line: {sys._getframe().f_lineno})")
-        # option_xpath = f"//mat-option[contains(translate(., 'BALRAMPUR', 'Balrampur'), '{target_village.lower()}')] | //mat-option//span[contains(translate(text(), 'BALRAMPUR', 'Balrampur'), '{target_village.lower()}')]"
-        # option = wait.until(EC.element_to_be_clickable((By.XPATH, option_xpath)))
-        # option.click()
-        # print(f"Selected village: {target_village} line: {sys._getframe().f_lineno}")
-
-        # 1. Locate and click the Angular dropdown menu container
+         # 1. Locate and click the Angular dropdown menu container
         dropdown_xpath = "//mat-select[contains(., 'Select Village')] | //div[contains(text(), 'Select Village')] | //mat-form-field[contains(., 'Select Village')]"
         dropdown = wait.until(EC.element_to_be_clickable((By.XPATH, dropdown_xpath)))
         dropdown.click()
@@ -120,21 +107,6 @@ def check_date_and_village_set():
         continue_btn = wait.until(EC.element_to_be_clickable((By.XPATH, continue_btn_xpath)))
         continue_btn.click()
         print(f"Successfully clicked 'Continue'. (line: {sys._getframe().f_lineno})")
-
-        # # 1. Broadly target the search button card using text and style classes
-        # search_btn_xpath = (
-        #     "//button[@type='submit' or contains(., 'Continue')]"
-        #     " | //mat-form-field//following::button[contains(., 'Continue')]"
-        #     " | //span[contains(text(), 'Continue')]/ancestor::button"
-        #     " | //button[contains(@class, 'mat-focus-indicator') and contains(., 'Continue')]"
-        # )
-        
-        # # 2. Wait until the button is present in the DOM layout
-        # search_btn = wait.until(EC.presence_of_element_located((By.XPATH, search_btn_xpath)))
-        
-        # # Try a standard driver click first to allow Angular event bubbles to fire naturally
-        # search_btn.click()
-        # print("Invalidated, setting again.")
 
     else:
         print(f"One or both fields do not show a validation error layout.(Line: {sys._getframe().f_lineno})")
@@ -323,7 +295,7 @@ def login():
             "//span[text()='8'] | "
             "//*[normalize-space(text())='8']"
         )
-        
+        mySleepFunction(1)
         # Wait until the cell element is visible and ready to be tapped
         date_element = wait.until(EC.element_to_be_clickable((By.XPATH, date_xpath)))
         date_element.click()
@@ -348,7 +320,7 @@ def login():
         print(f"Successfully clicked 'Continue'. (line: {sys._getframe().f_lineno})")
 
         # Replace this list with your actual target Ration Card numbers
-        ration_cards = ['226488143666', '226488227194', '226488570440', '226488671751', '226488734908', '226488887164', '226488902968', '226488947325', '226489254175', '226489266146', '226489336251', '226489587274', '226489665424', '226489700178', '226489709765', '226489813931', '226489913534', '226484565907']
+        ration_cards = ['226488947325', '226489254175', '226489266146', '226489336251', '226489587274', '226489665424', '226489700178', '226489709765', '226489813931', '226489913534', '226484565907']
         
         for card_number in ration_cards:
             
@@ -452,23 +424,41 @@ def login():
                             lakshan_checkbox.click()
                             time.sleep(0.5)
 
-                            # Find the real hidden file input and send the absolute path
-                            abs_file_path = os.path.abspath("600-kb.jpg")  # Ensure this file exists in your working directory
+                            # 1. Prepare your local file path
+                            abs_file_path = os.path.abspath("600-kb.jpg")  # Ensure this file exists in your workspace
 
-                            file_input = driver.find_element(By.XPATH, "//input[@type='file']")
-                            file_input.send_keys(abs_file_path)
-                            
+                            # 2. Convert the image to a base64 Data URL
+                            with open(abs_file_path, "rb") as image_file:
+                                encoded_string = base64.b64encode(image_file.read()).decode('utf-8')
+                                base64_data_url = f"data:image/jpeg;base64,{encoded_string}"
 
+                            # 3. Handle standard hidden input file upload if present
+                            file_inputs = driver.find_elements(By.XPATH, "//input[@type='file']")
+                            if file_inputs:
+                                file_inputs[0].send_keys(abs_file_path)
 
-                            # 3. Inject it into the image preview box via JavaScript execution
+                            # 4. Inject the base64 data directly into the preview element and notify Angular
                             js_injection_script = """
-                                var previewImg = document.querySelector(".upload-btn").closest('.row, div').querySelector("img");
-                                if (previewImg) {
-                                    previewImg.src = arguments[0];
-                                    previewImg.dispatchEvent(new Event('change', { bubbles: true }));
-                                    console.log("Dummy image successfully injected into preview element.");
+                                var uploadBtn = document.querySelector(".upload_btn");
+                                if (uploadBtn) {
+                                    var container = uploadBtn.closest('div, .row');
+                                    var previewImg = container ? container.querySelector("img") : null;
+                                    
+                                    if (previewImg) {
+                                        previewImg.src = arguments[0];
+                                        
+                                        // Dispatch multiple events to update Angular framework model state
+                                        var events = ['change', 'input', 'blur'];
+                                        events.forEach(function(name) {
+                                            var ev = new Event(name, { bubbles: true, cancelable: true });
+                                            previewImg.dispatchEvent(ev);
+                                        });
+                                        console.log("Visual preview successfully updated.");
+                                    } else {
+                                        console.log("No <img> tag found. Data sent to structural elements.");
+                                    }
                                 } else {
-                                    console.error("Could not locate the preview <img> tag on the page.");
+                                    console.error("Could not locate '.upload_btn' element.");
                                 }
                             """
 
@@ -501,27 +491,37 @@ def login():
                             driver.execute_script("arguments[0].click();", yes_save_btn)
                             print(f"Confirmation modal 'Yes, Save' button successfully clicked. (line: {sys._getframe().f_lineno})")
 
-
-                            # HTML के अनुसार swal2-confirm बटन को ढूंढें और क्लिक करें
-                            ok_button = WebDriverWait(driver, 10).until(
-                                EC.element_to_be_clickable((By.CSS_SELECTOR, "button.swal2-confirm"))
-                            )
-                            ok_button.click()
+                            
+                            # 2. Grab text inside to confirm it's the target duplicate constraint error
+                            error_text_element = driver.find_element(By.ID, "swal2-html-container")
                             mySleepFunction(1)
+                            if "इस वर्ष और तिमाही" in error_text_element.text: # "recorded for this year/quarter"
+                                print(f"Duplicate warning caught: {error_text_element.text}")
+                                
+                                # 3. Dismiss the popup modal first
+                                ok_button = driver.find_element(By.CSS_SELECTOR, "button.swal2-confirm")
+                                ok_button.click()
+                                
+                                # 4. Trigger form clearing operations using the precise DOM structure from your snippet
+                                logging.info(f"Resetting form for next member: {card_number} (line: {sys._getframe().f_lineno})")
+                                print(f"Resetting form for next member: {card_number} (line: {sys._getframe().f_lineno})")
 
-                            # 1. Broadly target the search button card using text and style classes
-                            specific_clear = WebDriverWait(driver, 10).until(
-                                EC.element_to_be_clickable((By.XPATH, "(//*[contains(text(), 'Clear')])[2]"))
-                            )
-                            specific_clear.click()
+                                # Explicitly targets the Clear button nested under the 'search-row-two' block
+                                specific_clear = WebDriverWait(driver, 10).until(
+                                    EC.element_to_be_clickable((By.XPATH, "//div[contains(@class, 'search-row-two')]//button[contains(., 'Clear')]"))
+                                )
+                                specific_clear.click()
+                            else:
+                                # HTML के अनुसार swal2-confirm बटन को ढूंढें और क्लिक करें
+                                ok_button = WebDriverWait(driver, 10).until(
+                                    EC.element_to_be_clickable((By.CSS_SELECTOR, "button.swal2-confirm"))
+                                )
+                                ok_button.click()
+                                check_date_and_village_set()
 
-
-                            print(f"Form population completed successfully. line: {sys._getframe().f_lineno}")
                             if i < total_buttons:
                                 counter = counter + 1
                                 continue
-
-
 
                         except Exception as e: # inner exception of option No, No, & photo upload
                             print(f"An error occurred during automation: {e} line: {sys._getframe().f_lineno}")
