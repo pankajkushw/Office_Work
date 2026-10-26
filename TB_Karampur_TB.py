@@ -74,39 +74,58 @@ def check_date_and_village_set():
     date_classes = date_field.get_attribute("class")
     village_classes = village_field.get_attribute("class")
 
-    # Check if both fields contain the Angular invalid class marker
     if "ng-invalid" in date_classes and "ng-invalid" in village_classes:
         print(f"Both fields are highlighted in red (invalid status). Injecting target data... (Line: {sys._getframe().f_lineno})")
-        # 1. Wait for global Angular loader to disappear completely
+        
+        # 1. Wait for global Angular loader layer to clear
         wait.until(EC.invisibility_of_element_located((By.TAG_NAME, "app-loader")))
         
-        # 2. Input Planned Visit Date via JavaScript execution
-        # (This bypasses click interceptions if the read-only or overlay blocks standard input typing)
-        date_input = wait.until(EC.presence_of_element_located((By.XPATH, "//input[contains(@placeholder, 'Visit Date')] | //mat-form-field[contains(., 'Visit Date')]//input")))
-        driver.execute_script("arguments[0].value = arguments[1];", date_input, target_date)
-        # Trigger standard input/change events so Angular detects the value update
-        driver.execute_script("arguments[0].dispatchEvent(new Event('input', { bubbles: true }));", date_input)
-        #driver.execute_script("arguments[0].dispatchEvent(new Event('change', { bubbles: True }));", date_input)
-        print(f"Set planned visit date to: {target_date} (Line: {sys._getframe().f_lineno})")
-
-         # 1. Locate and click the Angular dropdown menu container
-        dropdown_xpath = "//mat-select[contains(., 'Select Village')] | //div[contains(text(), 'Select Village')] | //mat-form-field[contains(., 'Select Village')]"
-        dropdown = wait.until(EC.element_to_be_clickable((By.XPATH, dropdown_xpath)))
-        dropdown.click()
-        print(f"Dropdown opened.line: {sys._getframe().f_lineno}")
-
-        # 2. Wait for the overlay option panel to pop up and click the targeted choice
-        option_xpath = f"//mat-option[contains(., '{target_village}')] | //span[contains(@class, 'mat-option-text') and contains(text(), '{target_village}')]"
-        option = wait.until(EC.element_to_be_clickable((By.XPATH, option_xpath)))
-        option.click()
-        print(f"Selected village: {target_village} (line: {sys._getframe().f_lineno})")
+        # 2. Open up picker, inject target value, and force focus triggers to clear validation state
+        date_input = wait.until(EC.presence_of_element_located((By.XPATH, "//input[contains(@data-placeholder, 'Select Planned Visit Date')] | //input[contains(@placeholder, 'Visit Date')] | //mat-form-field[contains(., 'Visit Date')]//input")))
         
-        # 3. Locate and click the "Continue" button
-        # Using text matching helps isolate it even if it changes from disabled to active state
-        continue_btn_xpath = "//button[contains(., 'Continue')] | //span[contains(text(), 'Continue')]/ancestor::button"
-        continue_btn = wait.until(EC.element_to_be_clickable((By.XPATH, continue_btn_xpath)))
-        continue_btn.click()
-        print(f"Successfully clicked 'Continue'. (line: {sys._getframe().f_lineno})")
+        # Clean clear and focus pattern sequence to alert Angular model variables
+        date_input.click()
+        date_input.clear()
+        
+        # Value assignment sequence via safe JS macro tracking parameters
+        driver.execute_script("""
+            var input = arguments[0];
+            var val = arguments[1];
+            input.value = val;
+            
+            // Fire multi-event dispatch phase steps to enforce Angular reactive forms validation lifecycle
+            ['input', 'change', 'blur'].forEach(function(evtName) {
+                var e = new Event(evtName, { bubbles: true, cancelable: true });
+                input.dispatchEvent(e);
+            });
+        """, date_input, target_date)
+        print(f"Set planned visit date to: {target_date} (Line: {sys._getframe().f_lineno})")
+        mySleepFunction(1)
+
+        # 3. Locate and safely open the target Angular Dropdown element
+        # Structural target uses explicit mat-select targeting derived from your layout trace snapshot
+        dropdown_xpath = "//mat-select[contains(@id, 'select') or contains(@role, 'combobox')] | //mat-select[ancestor::mat-form-field[contains(., 'Select Village')]]"
+        dropdown = wait.until(EC.element_to_be_clickable((By.XPATH, dropdown_xpath)))
+        
+        # Programmatic dispatch trigger click pattern to avoid DOM element overlap errors
+        driver.execute_script("arguments[0].click();", dropdown)
+        print(f"Dropdown opened. Line: {sys._getframe().f_lineno}")
+        mySleepFunction(1)
+
+        # 4. Handle Option Node identification context checks
+        option_xpath = f"//mat-option[contains(., '{target_village}')] | //mat-option//span[contains(text(), '{target_village}')]"
+        option = wait.until(EC.element_to_be_clickable((By.XPATH, option_xpath)))
+        driver.execute_script("arguments[0].click();", option)
+        print(f"Selected village: {target_village} (Line: {sys._getframe().f_lineno})")
+        mySleepFunction(1)
+        
+        # 5. Handle active Continue validation click tracking workflow routines
+        continue_btn_xpath = "//button[contains(., 'Continue')] | //button[descendant::span[contains(text(), 'Continue')]]"
+        continue_btn = wait.until(EC.presence_of_element_located((By.XPATH, continue_btn_xpath)))
+        
+        # Force JavaScript programmatic click tracking step to bypass standard .click() validation blocks
+        driver.execute_script("arguments[0].click();", continue_btn)
+        print(f"Successfully clicked 'Continue'. (Line: {sys._getframe().f_lineno})")
 
     else:
         print(f"One or both fields do not show a validation error layout.(Line: {sys._getframe().f_lineno})")
@@ -492,32 +511,108 @@ def login():
                             print(f"Confirmation modal 'Yes, Save' button successfully clicked. (line: {sys._getframe().f_lineno})")
 
                             
-                            # 2. Grab text inside to confirm it's the target duplicate constraint error
-                            error_text_element = driver.find_element(By.ID, "swal2-html-container")
+
+
+                            # 1. Wait for and capture the SweetAlert2 duplicate container
+                            # Now alert_container is actively utilized to locate elements relative to itself!
+                            alert_container = WebDriverWait(driver, 1).until(
+                                EC.visibility_of_element_located((By.CLASS_NAME, "swal2-container"))
+                            )
                             mySleepFunction(1)
+
+                            # 2. Scope the search INSIDE the alert_container for maximum speed and accuracy
+                            error_text_element = alert_container.find_element(By.ID, "swal2-html-container")
+                            mySleepFunction(2)
+
                             if "इस वर्ष और तिमाही" in error_text_element.text: # "recorded for this year/quarter"
                                 print(f"Duplicate warning caught: {error_text_element.text}")
                                 
-                                # 3. Dismiss the popup modal first
-                                ok_button = driver.find_element(By.CSS_SELECTOR, "button.swal2-confirm")
-                                ok_button.click()
+                                # Target the confirm button inside the container element structure directly
+                                ok_button = alert_container.find_element(By.CSS_SELECTOR, "button.swal2-confirm")
                                 
-                                # 4. Trigger form clearing operations using the precise DOM structure from your snippet
+                                js_force_click_and_close = """
+                                    var btn = arguments[0];
+                                    if (btn) {
+                                        btn.focus();
+                                        ['mousedown', 'mouseup', 'click'].forEach(function(evtName) {
+                                            var e = new MouseEvent(evtName, { bubbles: true, cancelable: true, view: window });
+                                            btn.dispatchEvent(e);
+                                        });
+                                        console.log("Synthesized interaction sequence dispatched to OK button.");
+                                        
+                                        setTimeout(function() {
+                                            var container = document.querySelector(".swal2-container");
+                                            if (container) {
+                                                container.remove();
+                                                document.body.classList.remove("swal2-shown", "swal2-height-auto");
+                                                console.log("Forced dynamic cleanup of blocking SweetAlert layers completed.");
+                                            }
+                                        }, 300);
+                                    }
+                                """
+                                driver.execute_script(js_force_click_and_close, ok_button)
+                                
+                                WebDriverWait(driver, 5).until(
+                                    EC.invisibility_of_element_located((By.CLASS_NAME, "swal2-container"))
+                                )
+                                
+                                # 4. Trigger form clearing operations safely via JavaScript click
                                 logging.info(f"Resetting form for next member: {card_number} (line: {sys._getframe().f_lineno})")
                                 print(f"Resetting form for next member: {card_number} (line: {sys._getframe().f_lineno})")
 
-                                # Explicitly targets the Clear button nested under the 'search-row-two' block
+                                # Locate the element context structure explicitly
                                 specific_clear = WebDriverWait(driver, 10).until(
-                                    EC.element_to_be_clickable((By.XPATH, "//div[contains(@class, 'search-row-two')]//button[contains(., 'Clear')]"))
+                                    EC.presence_of_element_located((By.XPATH, "//div[contains(@class, 'search-row-two')]//button[contains(., 'Clear')]"))
                                 )
-                                specific_clear.click()
+                                
+                                # Execute script-based click to completely avoid Interception / State exceptions
+                                driver.execute_script("arguments[0].click();", specific_clear)
+                                print("Clear button successfully triggered via JS execution.")
                             else:
-                                # HTML के अनुसार swal2-confirm बटन को ढूंढें और क्लिक करें
-                                ok_button = WebDriverWait(driver, 10).until(
-                                    EC.element_to_be_clickable((By.CSS_SELECTOR, "button.swal2-confirm"))
+                                ok_button = alert_container.find_element(By.CSS_SELECTOR, "button.swal2-confirm")
+                                
+                                js_fallback_close = """
+                                    var btn = arguments[0];
+                                    if (btn) {
+                                        btn.focus();
+                                        ['mousedown', 'mouseup', 'click'].forEach(function(n) {
+                                            btn.dispatchEvent(new MouseEvent(n, { bubbles: true, cancelable: true }));
+                                        });
+                                        setTimeout(function() {
+                                            var c = document.querySelector(".swal2-container");
+                                            if(c) { c.remove(); document.body.classList.remove("swal2-shown"); }
+                                        }, 300);
+                                    }
+                                """
+                                driver.execute_script(js_fallback_close, ok_button)
+                                
+                                WebDriverWait(driver, 5).until(
+                                    EC.invisibility_of_element_located((By.CLASS_NAME, "swal2-container"))
                                 )
-                                ok_button.click()
                                 check_date_and_village_set()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
                             if i < total_buttons:
                                 counter = counter + 1
