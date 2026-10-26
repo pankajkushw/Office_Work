@@ -336,28 +336,12 @@ def login():
             "//*[text()='Go to Entry Page']"
         )
         
-        # Wait up to 10 seconds for the button to be visible and clickable
+        # Go to entry page
         entry_page_btn = wait.until(EC.element_to_be_clickable((By.XPATH, entry_page_xpath)))
         entry_page_btn.click()
         print(f"Successfully clicked 'Go to Entry Page' button.line: {sys._getframe().f_lineno}")
 
-
-
-
-        # # 1. Locate and click the Angular dropdown menu container
-        # dropdown_xpath = "//mat-select[contains(., 'Select Village')] | //div[contains(text(), 'Select Village')] | //mat-form-field[contains(., 'Select Village')]"
-        # dropdown = wait.until(EC.element_to_be_clickable((By.XPATH, dropdown_xpath)))
-        # dropdown.click()
-        # print(f"Dropdown opened.line: {sys._getframe().f_lineno}")
-
-        # # 2. Wait for the overlay option panel to pop up and click the targeted choice
-        # option_xpath = f"//mat-option[contains(., '{target_village}')] | //span[contains(@class, 'mat-option-text') and contains(text(), '{target_village}')]"
-        # option = wait.until(EC.element_to_be_clickable((By.XPATH, option_xpath)))
-        # option.click()
-        # print(f"Selected village: {target_village} (line: {sys._getframe().f_lineno})")
-        
-        # 3. Locate and click the "Continue" button
-        # Using text matching helps isolate it even if it changes from disabled to active state
+        # continue page
         continue_btn_xpath = "//button[contains(., 'Continue')] | //span[contains(text(), 'Continue')]/ancestor::button"
         continue_btn = wait.until(EC.element_to_be_clickable((By.XPATH, continue_btn_xpath)))
         continue_btn.click()
@@ -365,109 +349,48 @@ def login():
 
         # Replace this list with your actual target Ration Card numbers
         ration_cards = ['226488143666', '226488227194', '226488570440', '226488671751', '226488734908', '226488887164', '226488902968', '226488947325', '226489254175', '226489266146', '226489336251', '226489587274', '226489665424', '226489700178', '226489709765', '226489813931', '226489913534', '226484565907']
-        round_complete = False
+        
         for card_number in ration_cards:
             
-            ret = check_date_and_village_set()
             print(f"Executing sequence for card entry: {card_number}")
             logging.info(f"Opening:  {card_number}")
             try:
-                # Targets the input field directly associated with the ID card icon,
-                # explicitly avoiding any date picker fields containing calendar icons.
-                if (ret == False):
-                    print(f"Date and Village fields were not set correctly. Re-injecting values for card: {card_number} (line: {sys._getframe().f_lineno})")
-                    #check_date_and_village_set()
-                    input_xpath = (
-                        "//input[@type='text' and not(ancestor::mat-form-field[.//mat-datepicker-toggle]) and not(contains(@placeholder, 'Date'))]"
-                        " | //mat-label[contains(., 'Card') or contains(., 'ABHA')]/ancestor::mat-form-field//input"
-                        " | (//mat-form-field//input)[last()]"
-                    )
+                print(f"Date and Village fields were not set correctly. Re-injecting values for card: {card_number} (line: {sys._getframe().f_lineno})")
+                input_xpath = (
+                    "//input[@type='text' and not(ancestor::mat-form-field[.//mat-datepicker-toggle]) and not(contains(@placeholder, 'Date'))]"
+                    " | //mat-label[contains(., 'Card') or contains(., 'ABHA')]/ancestor::mat-form-field//input"
+                    " | (//mat-form-field//input)[last()]"
+                )
+            
+                # Wait until the true search input field is present
+                search_field = wait.until(EC.presence_of_element_located((By.XPATH, input_xpath)))
                 
-                    # Wait until the true search input field is present
-                    search_field = wait.until(EC.presence_of_element_located((By.XPATH, input_xpath)))
-                    
-                    # Inject values directly using JavaScript to prevent calendar overlays from popping up
-                    # Inject values directly into the input using the proper indexed arguments
-                    driver.execute_script("arguments[0].value = arguments[1];", search_field, card_number)
-                    driver.execute_script("arguments[0].dispatchEvent(new Event('input', { bubbles: true }));", search_field)
-                    driver.execute_script("arguments[0].dispatchEvent(new Event('change', { bubbles: true }));", search_field)
+                # Inject values directly using JavaScript to prevent calendar overlays from popping up
+                # Inject values directly into the input using the proper indexed arguments
+                driver.execute_script("arguments[0].value = arguments[1];", search_field, card_number)
+                driver.execute_script("arguments[0].dispatchEvent(new Event('input', { bubbles: true }));", search_field)
+                driver.execute_script("arguments[0].dispatchEvent(new Event('change', { bubbles: true }));", search_field)
 
-                    print(f"Card number successfully injected into the correct Search box. (line: {sys._getframe().f_lineno})")
-                
-                # 1. Broadly target the search button card using text and style classes
+                print(f"Card number successfully injected into the correct Search box. (line: {sys._getframe().f_lineno})")
                 search_btn_xpath = (
                     "//button[@type='submit' or contains(., 'Search')]"
                     " | //mat-form-field//following::button[contains(., 'Search')]"
                     " | //span[contains(text(), 'Search')]/ancestor::button"
                     " | //button[contains(@class, 'mat-focus-indicator') and contains(., 'Search')]"
                 )
-                
-                # 2. Wait until the button is present in the DOM layout
-
                 search_btn = wait.until(EC.presence_of_element_located((By.XPATH, search_btn_xpath)))
-                
-                # 3. Clean click execution strategy
-
-                # Try a standard driver click first to allow Angular event bubbles to fire naturally
                 search_btn.click()
                 print(f"Search Member of Ration Card. (line: {sys._getframe().f_lineno})")
 
-                #Screening Logic will go here$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-                # Find all active "Select" buttons in the table
-                # This uses a partial text match or exact match on the text inside the button/link
-             
-                try:
-                    # 1. Check if the "Ayushman Card Not Found" popup appears (waits up to 3 seconds)
-                    popup_header = WebDriverWait(driver, 3).until(
-                        EC.presence_of_element_located((By.XPATH, "//*[contains(text(), 'Ayushman Card Not Found')]"))
-                    )
-                    
-                    print(f"Popup encountered: Ayushman Card Not Found for card {card_number}. Dismissing and skipping. (line: {sys._getframe().f_lineno})")
-                    #logging.warning(f"Ayushman Card Not Found for card: {card_number}")
 
-                    # 2. Locate and click the 'OK' button to dismiss the modal
-                    # Using a text match on the purple button text 'OK'
-                    ok_button = driver.find_element(By.XPATH, "//button[contains(text(), 'OK')] | //*[text()='OK']")
-                    ok_button.click()
-                    
-                    # 3. Wait briefly for the modal backdrop overlay to disappear before continuing the loop
-                    WebDriverWait(driver, 3).until(EC.staleness_of(popup_header))
-                    
-                    # 4. Skip the rest of the current iteration and move to the next member/card
-                    continue
+                #Screening Logic will go here$$$$$$$$$$$$$$$$$$$$$$$$$$$
+                wait.until(EC.presence_of_element_located((By.CLASS_NAME, "custom-table")))
+                # Target the buttons precisely using the class name 'action-btn' shown in your HTML
+                select_buttons = driver.find_elements(By.CSS_SELECTOR, "button.action-btn")
+                total_buttons = len(select_buttons)
 
-                except TimeoutException:
-                    # No popup appeared within 3 seconds, proceed normally with the form actions
-                    pass
-
-                identification_header = driver.find_elements(By.XPATH, "//*[contains(text(), 'Identification Details')]")
-                if len(identification_header) > 0:
-                    print(f"Identification Details section is already visible on the screen: {card_number} line: {sys._getframe().f_lineno}")
-                    logging.info("Bypassed select buttons loop because Identification Details container is active.")
-                    
-                    for_single()
-                    
-                    try:
-                        abha_field = driver.find_element(By.XPATH, "//mat-form-field[contains(., 'Abha Id')]//input")
-                        abha_id_value = abha_field.get_attribute("value")
-                        print(f"Abha ID found for card {card_number}: {abha_id_value} line: {sys._getframe().f_lineno}")
-                        # # CHANGE HERE: Skip the loop if it is NOT present
-                        # if not abha_id_value or not abha_id_value.strip():
-                        #     print(f"Abha ID is missing for card {card_number}. Skipping next steps.")
-                        #     continue  
-                            
-                    except Exception as e:
-                        #logging.warning(f"Could not read Abha ID field: {str(e)}")
-                        # If the field can't be found, it's not present, so we skip
-                        continue
-                else:
-                    wait.until(EC.presence_of_element_located((By.CLASS_NAME, "custom-table")))
-                    # Target the buttons precisely using the class name 'action-btn' shown in your HTML
-                    select_buttons = driver.find_elements(By.CSS_SELECTOR, "button.action-btn")
-                    total_buttons = len(select_buttons)
-
-                    print(f"Found {total_buttons} matching 'Select' buttons. line: {sys._getframe().f_lineno}")
-                    logging.info(f"Member in :  {card_number} : {total_buttons}")
+                print(f"Found {total_buttons} matching 'Select' buttons. line: {sys._getframe().f_lineno}")
+                logging.info(f"Member in :  {card_number} : {total_buttons}")
 
                 counter = 0
                 
@@ -508,55 +431,6 @@ def login():
                         print(f"Proceeding with normal report creation actions... (line: {sys._getframe().f_lineno})")
 
                         try:
-                            abha_input_element = WebDriverWait(driver, 5).until(
-                                EC.presence_of_element_located((By.XPATH, "//input[@formcontrolname='abhaId']"))
-                            )
-                            abha_id_value = abha_input_element.get_attribute("value")
-                            
-                            if abha_id_value and abha_id_value.strip():
-                                print(f"Abha ID is populated: {abha_id_value}")
-                                #logging.info(f"Abha ID found for member: {abha_id_value}")
-                                # Add your loop skip or 'continue' logic here if needed
-                                
-                            else:
-                                print("Abha ID field is empty/blank.")
-                                clear_search_btn = driver.find_element(By.XPATH, "//button[contains(., 'Search')]/following-sibling::button[contains(., 'Clear')]")
-                                clear_search_btn.click()
-                                search_btn_xpath = (
-                                    "//button[@type='submit' or contains(., 'Search')]"
-                                    " | //mat-form-field//following::button[contains(., 'Search')]"
-                                    " | //span[contains(text(), 'Search')]/ancestor::button"
-                                    " | //button[contains(@class, 'mat-focus-indicator') and contains(., 'Search')]"
-                                )
-                                
-                                # 2. Wait until the button is present in the DOM layout
-                                search_btn = wait.until(EC.presence_of_element_located((By.XPATH, search_btn_xpath)))
-                                # 3. Clean click execution strategy
-                                # Try a standard driver click first to allow Angular event bubbles to fire naturally
-                                search_btn.click()
-                                #logging.info("Abha ID is not populated. Proceeding with form execution.")
-                                # Add your form entry/generation logic here
-                                continue
-                                
-                        except Exception as e:
-                            print(f"Error while checking Abha ID field: {e} line: {sys._getframe().f_lineno}")
-                            # If the field can't be found, it's not present, so we skip
-
-
-                        try:
-                           # Wait up to 10 seconds for the SweetAlert OK button to be clickable
-                            ok_button = WebDriverWait(driver, 10).until(
-                            EC.element_to_be_clickable((By.CSS_SELECTOR, "button.swal2-confirm"))
-                            )
-                            ok_button.click()
-                            print("Popup closed successfully.")
-                            continue
-                        except Exception as e:
-                            print(f"Failed to close popup: line: {sys._getframe().f_lineno}")
-
-                        time.sleep(1) 
-                        #####################################
-                        try:
                             print(f"screening for {card_number}: {i}")
                             # ----------------------------------------------------
                             # 1. Select "No" in the "Belongs to PVTG Category" Dropdown
@@ -577,33 +451,6 @@ def login():
                             )
                             lakshan_checkbox.click()
                             time.sleep(0.5)
-
-                            # ----------------------------------------------------
-                            # 4. Upload a Dummy Picture
-                            # ----------------------------------------------------
-                            # --- 1. File Upload Phase ---
- 
-
-                            # # 1. Corrected 1x1 black JPEG byte sequence (fixed syntax/escape errors)600-kb
-                            # dummy_image_bytes = (
-                            #     b"\xFF\xD8\xFF\xE0\x00\x10JFIF\x00\x01\x01\x01\x00`\x00`\x00\x00"
-                            #     b"\xFF\xDB\x00C\x00\x08\x06\x06\x07\x06\x05\x08\x07\x07\x07\t\t"
-                            #     b"\x08\n\x0C\x14\x28\x28\x0D\x0C\x0C\x0B\x0B\x0C\x19\x12\x13\x0F\x14\x1D\x1A\x1F"
-                            #     b"\x1E\x1D\x1A\x1C\x1C\x20\x24\x2E\x27\x20\x22\x2C\x23\x1C\x1C\x28\x37\x29\x2C"
-                            #     b"\x30\x31\x34\x34\x34\x1F\x27\x39\x3D\x38\x32\x3C\x2E\x33\x34\x32"
-                            #     b"\xFF\xC0\x00\x0B\x08\x00\x01\x00\x01\x01\x01\x11\x01\xFF\xC4"
-                            #     b"\x00\x15\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-                            #     b"\x00\x00\x00\x00\x00\x00\xFF\xDA\x00\x0C\x01\x01\x00\x00\x3F"
-                            #     b"\x00\xB2\xC0\xFF\xD9"
-                            # )
-
-                            # # --- Phase 1: Real Form Upload (Backend) ---
-                            # # Create a real, local file temporarily so Selenium can send it
-                            # temp_filename = "dummy_upload.jpg"
-                            # with open(temp_filename, "wb") as f:
-                            #     f.write(dummy_image_bytes)
-
-                            # abs_file_path = os.path.abspath(temp_filename)
 
                             # Find the real hidden file input and send the absolute path
                             abs_file_path = os.path.abspath("600-kb.jpg")  # Ensure this file exists in your working directory
