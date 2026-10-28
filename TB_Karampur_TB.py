@@ -30,7 +30,7 @@ wait = WebDriverWait(driver, 10)
 CHC = "CHC BISHRAMPUR"
 NAME = "Heenam Kushwaha"
 target_village = "Balrampurr"
-target_date = "10-08-2026" 
+target_date = "08-oct-2026" 
 driver.implicitly_wait(10) 
 def mySleepFunction(seconds):
     for i in range(seconds):
@@ -94,21 +94,21 @@ def check_date_and_village_set():
 
         # 2. Select Village from the Angular Material Dropdown
         # First, click the dropdown trigger container to open the option panel
-        village_dropdown = WebDriverWait(driver, 10).until(
+        village_dropdown = WebDriverWait(driver, 2).until(
             EC.element_to_be_clickable((By.CSS_SELECTOR, "mat-select[formcontrolname='village']"))
         )
         village_dropdown.click()
 
         # Wait for the option panel overlay to appear and click the target village option
         # Using dynamic text mapping to locate the exact village row
-        village_option = WebDriverWait(driver, 10).until(
+        village_option = WebDriverWait(driver, 2).until(
             EC.element_to_be_clickable((By.XPATH, f"//mat-option//span[contains(text(), '{target_village}')]"))
         )
         village_option.click()
 
         # 3. Click the Continue Button
         # Using the specific text inside the button container
-        continue_button = WebDriverWait(driver, 10).until(
+        continue_button = WebDriverWait(driver, 2).until(
             EC.element_to_be_clickable((By.XPATH, "//button[contains(text(), 'Continue')]"))
         )
         continue_button.click()
