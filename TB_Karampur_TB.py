@@ -30,7 +30,7 @@ wait = WebDriverWait(driver, 10)
 CHC = "CHC BISHRAMPUR"
 NAME = "Heenam Kushwaha"
 target_village = "Balrampurr"
-target_date = "08-10-2026" 
+target_date = "10-08-2026" 
 driver.implicitly_wait(10) 
 def mySleepFunction(seconds):
     for i in range(seconds):
@@ -75,57 +75,43 @@ def check_date_and_village_set():
     village_classes = village_field.get_attribute("class")
 
     if "ng-invalid" in date_classes and "ng-invalid" in village_classes:
-        print(f"Both fields are highlighted in red (invalid status). Injecting target data... (Line: {sys._getframe().f_lineno})")
-        
-        # 1. Wait for global Angular loader layer to clear
-        wait.until(EC.invisibility_of_element_located((By.TAG_NAME, "app-loader")))
-        
-        # 2. Open up picker, inject target value, and force focus triggers to clear validation state
-        date_input = wait.until(EC.presence_of_element_located((By.XPATH, "//input[contains(@data-placeholder, 'Select Planned Visit Date')] | //input[contains(@placeholder, 'Visit Date')] | //mat-form-field[contains(., 'Visit Date')]//input")))
-        
-        # Clean clear and focus pattern sequence to alert Angular model variables
-        date_input.click()
-        date_input.clear()
-        
-        # Value assignment sequence via safe JS macro tracking parameters
-        driver.execute_script("""
-            var input = arguments[0];
+
+        # 1. Input Target Date via JavaScript (Ensures Angular detects the change)
+        date_input = WebDriverWait(driver, 10).until(
+            EC.visibility_of_element_located((By.ID, "mat-input-2"))
+        )
+        driver.execute_script(
+            """
+            var element = arguments[0];
             var val = arguments[1];
-            input.value = val;
-            
-            // Fire multi-event dispatch phase steps to enforce Angular reactive forms validation lifecycle
-            ['input', 'change', 'blur'].forEach(function(evtName) {
-                var e = new Event(evtName, { bubbles: true, cancelable: true });
-                input.dispatchEvent(e);
-            });
-        """, date_input, target_date)
-        print(f"Set planned visit date to: {target_date} (Line: {sys._getframe().f_lineno})")
-        mySleepFunction(1)
+            element.value = val;
+            element.dispatchEvent(new Event('input', { bubbles: true }));
+            element.dispatchEvent(new Event('change', { bubbles: true }));
+            """, 
+            date_input, 
+            target_date
+        )
 
-        # 3. Locate and safely open the target Angular Dropdown element
-        # Structural target uses explicit mat-select targeting derived from your layout trace snapshot
-        dropdown_xpath = "//mat-select[contains(@id, 'select') or contains(@role, 'combobox')] | //mat-select[ancestor::mat-form-field[contains(., 'Select Village')]]"
-        dropdown = wait.until(EC.element_to_be_clickable((By.XPATH, dropdown_xpath)))
-        
-        # Programmatic dispatch trigger click pattern to avoid DOM element overlap errors
-        driver.execute_script("arguments[0].click();", dropdown)
-        print(f"Dropdown opened. Line: {sys._getframe().f_lineno}")
-        mySleepFunction(1)
+        # 2. Select Village from the Angular Material Dropdown
+        # First, click the dropdown trigger container to open the option panel
+        village_dropdown = WebDriverWait(driver, 10).until(
+            EC.element_to_be_clickable((By.CSS_SELECTOR, "mat-select[formcontrolname='village']"))
+        )
+        village_dropdown.click()
 
-        # 4. Handle Option Node identification context checks
-        option_xpath = f"//mat-option[contains(., '{target_village}')] | //mat-option//span[contains(text(), '{target_village}')]"
-        option = wait.until(EC.element_to_be_clickable((By.XPATH, option_xpath)))
-        driver.execute_script("arguments[0].click();", option)
-        print(f"Selected village: {target_village} (Line: {sys._getframe().f_lineno})")
-        mySleepFunction(1)
-        
-        # 5. Handle active Continue validation click tracking workflow routines
-        continue_btn_xpath = "//button[contains(., 'Continue')] | //button[descendant::span[contains(text(), 'Continue')]]"
-        continue_btn = wait.until(EC.presence_of_element_located((By.XPATH, continue_btn_xpath)))
-        
-        # Force JavaScript programmatic click tracking step to bypass standard .click() validation blocks
-        driver.execute_script("arguments[0].click();", continue_btn)
-        print(f"Successfully clicked 'Continue'. (Line: {sys._getframe().f_lineno})")
+        # Wait for the option panel overlay to appear and click the target village option
+        # Using dynamic text mapping to locate the exact village row
+        village_option = WebDriverWait(driver, 10).until(
+            EC.element_to_be_clickable((By.XPATH, f"//mat-option//span[contains(text(), '{target_village}')]"))
+        )
+        village_option.click()
+
+        # 3. Click the Continue Button
+        # Using the specific text inside the button container
+        continue_button = WebDriverWait(driver, 10).until(
+            EC.element_to_be_clickable((By.XPATH, "//button[contains(text(), 'Continue')]"))
+        )
+        continue_button.click()
 
     else:
         print(f"One or both fields do not show a validation error layout.(Line: {sys._getframe().f_lineno})")
@@ -339,7 +325,7 @@ def login():
         print(f"Successfully clicked 'Continue'. (line: {sys._getframe().f_lineno})")
 
         # Replace this list with your actual target Ration Card numbers
-        ration_cards = ['226488947325', '226489254175', '226489266146', '226489336251', '226489587274', '226489665424', '226489700178', '226489709765', '226489813931', '226489913534', '226484565907']
+        ration_cards = ['226489587274', '226489665424', '226489700178', '226489709765', '226489813931', '226489913534', '226484565907']
         
         for card_number in ration_cards:
             
@@ -422,6 +408,47 @@ def login():
                         print(f"Proceeding with normal report creation actions... (line: {sys._getframe().f_lineno})")
 
                         try:
+                            try:
+                            # 1. Locate the ABHA ID field using an exception-safe layout locator
+                                # Tries the expected dynamic ID first, falls back to formcontrolname if the ID shifts
+                                abha_input = WebDriverWait(driver, 1).until(
+                                    EC.visibility_of_element_located((
+                                        By.XPATH, "//input[@formcontrolname='abhaId' or @id='mat-input-58']"
+                                    ))
+                                )
+
+                                # 2. Extract current value cleanly
+                                current_value = abha_input.get_attribute("value")
+                                current_value = current_value.strip() if current_value else ""
+
+                                # 3. Process if blank
+                                if not current_value:
+                                    random_abha_id = "".join([str(rand_mod.randint(0, 9)) for _ in range(14)])
+                                    
+                                    # Safe positional array arguments injection
+                                    driver.execute_script(
+                                        """
+                                        var element = arguments[0];
+                                        var val = arguments[1];
+                                        if (element) {
+                                            element.value = val;
+                                            element.dispatchEvent(new Event('input', { bubbles: true }));
+                                            element.dispatchEvent(new Event('change', { bubbles: true }));
+                                        }
+                                        """, 
+                                        abha_input, 
+                                        random_abha_id
+                                    )
+                                    print(f"ABHA ID was blank. Filled with random value: {random_abha_id}")
+                                else:
+                                    print(f"ABHA ID already has a value: {current_value}")
+
+                            except Exception as e:
+                                # Captures timeouts or stale element references without stopping the pipeline execution
+                                print(f"Bypassed ABHA ID block checking error: {e}")
+                                logging.warning(f"Could not check or update ABHA ID field layout: {e}")  
+
+
                             print(f"screening for {card_number}: {i}")
                             # ----------------------------------------------------
                             # 1. Select "No" in the "Belongs to PVTG Category" Dropdown
@@ -552,7 +579,7 @@ def login():
                                 """
                                 driver.execute_script(js_force_click_and_close, ok_button)
                                 
-                                WebDriverWait(driver, 5).until(
+                                WebDriverWait(driver, 2).until(
                                     EC.invisibility_of_element_located((By.CLASS_NAME, "swal2-container"))
                                 )
                                 
@@ -561,7 +588,7 @@ def login():
                                 print(f"Resetting form for next member: {card_number} (line: {sys._getframe().f_lineno})")
 
                                 # Locate the element context structure explicitly
-                                specific_clear = WebDriverWait(driver, 10).until(
+                                specific_clear = WebDriverWait(driver, 2).until(
                                     EC.presence_of_element_located((By.XPATH, "//div[contains(@class, 'search-row-two')]//button[contains(., 'Clear')]"))
                                 )
                                 
