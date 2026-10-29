@@ -10,6 +10,7 @@ import time, os, logging, sys
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.keys import Keys
 import base64
+import random as rand_mod
 
 
 
@@ -29,8 +30,8 @@ wait = WebDriverWait(driver, 10)
 
 CHC = "CHC BISHRAMPUR"
 NAME = "Heenam Kushwaha"
-target_village = "Balrampurr"
-target_date = "08-oct-2026" 
+target_village = "Balrampur"
+target_date = "10-08-2026" 
 driver.implicitly_wait(10) 
 def mySleepFunction(seconds):
     for i in range(seconds):
@@ -76,148 +77,84 @@ def check_date_and_village_set():
 
     if "ng-invalid" in date_classes and "ng-invalid" in village_classes:
 
-        # 1. Input Target Date via JavaScript (Ensures Angular detects the change)
-        date_input = WebDriverWait(driver, 10).until(
-            EC.visibility_of_element_located((By.ID, "mat-input-2"))
-        )
-        driver.execute_script(
-            """
-            var element = arguments[0];
-            var val = arguments[1];
-            element.value = val;
-            element.dispatchEvent(new Event('input', { bubbles: true }));
-            element.dispatchEvent(new Event('change', { bubbles: true }));
-            """, 
-            date_input, 
-            target_date
-        )
+        try:
+            # 1. Fill Date Input via JavaScript
+            date_input = WebDriverWait(driver, 10).until(
+                EC.visibility_of_element_located((By.ID, "mat-input-2"))
+            )
+            driver.execute_script(
+                """
+                var element = arguments[0];
+                var val = arguments[1];
+                element.value = val;
+                element.dispatchEvent(new Event('input', { bubbles: true }));
+                element.dispatchEvent(new Event('change', { bubbles: true }));
+                """, 
+                date_input, 
+                target_date
+            )
 
-        # 2. Select Village from the Angular Material Dropdown
-        # First, click the dropdown trigger container to open the option panel
-        village_dropdown = WebDriverWait(driver, 2).until(
-            EC.element_to_be_clickable((By.CSS_SELECTOR, "mat-select[formcontrolname='village']"))
-        )
-        village_dropdown.click()
+            # 2. Select Village from the Angular Material Dropdown
+            # Click the dropdown trigger container to open the option panel
+            village_dropdown = WebDriverWait(driver, 2).until(
+                EC.element_to_be_clickable((By.ID, "mat-select-8"))
+            )
+            village_dropdown.click()
 
-        # Wait for the option panel overlay to appear and click the target village option
-        # Using dynamic text mapping to locate the exact village row
-        village_option = WebDriverWait(driver, 2).until(
-            EC.element_to_be_clickable((By.XPATH, f"//mat-option//span[contains(text(), '{target_village}')]"))
-        )
-        village_option.click()
+            # Wait for the option element to be present and visible in the DOM
+            # (Fixed typo from 'visibility_of_element_factor_located' to 'visibility_of_element_located')
+            village_option = WebDriverWait(driver, 2).until(
+                EC.visibility_of_element_located((By.XPATH, f"//mat-option//span[@class='mat-option-text' and contains(text(), '{target_village}')]"))
+            )
 
-        # 3. Click the Continue Button
-        # Using the specific text inside the button container
-        continue_button = WebDriverWait(driver, 2).until(
-            EC.element_to_be_clickable((By.XPATH, "//button[contains(text(), 'Continue')]"))
-        )
-        continue_button.click()
+            # Use a JavaScript Click to bypass any animation overlay blocks
+            driver.execute_script("arguments[0].click();", village_option)
+
+            # 3. Click the Continue Button
+            continue_button = WebDriverWait(driver, 2).until(
+                EC.element_to_be_clickable((By.XPATH, "//button[contains(text(), 'Continue')]"))
+            )
+            continue_button.click()
+
+
+            # 1. Click the Select Year dropdown trigger container using formcontrolname
+            year_dropdown = WebDriverWait(driver, 5).until(
+                EC.element_to_be_clickable((By.CSS_SELECTOR, "mat-select[formcontrolname='screening_year']"))
+            )
+            year_dropdown.click()
+
+            # 2. Wait for the overlay option matching "2026" to be visible
+            year_option = WebDriverWait(driver, 5).until(
+                EC.visibility_of_element_located((By.XPATH, "//mat-option//span[@class='mat-option-text' and normalize-space(text())='2026']"))
+            )
+
+            # 3. Perform a JavaScript click to bypass any animation overlay delays
+            driver.execute_script("arguments[0].click();", year_option)
+
+            # 1. Click the Quarter dropdown trigger container using formcontrolname
+            quarter_dropdown = WebDriverWait(driver, 5).until(
+                EC.element_to_be_clickable((By.CSS_SELECTOR, "mat-select[formcontrolname='screening_quarter']"))
+            )
+            quarter_dropdown.click()
+
+            # 2. Wait for the overlay option matching "Quarter 3 (Jul-Sep)" to be visible
+            quarter_option = WebDriverWait(driver, 5).until(
+                EC.visibility_of_element_located((By.XPATH, "//mat-option//span[@class='mat-option-text' and normalize-space(text())='Quarter 3 (Jul-Sep)']"))
+            )
+
+            # 3. Perform a JavaScript click to bypass any animation overlay delays
+            driver.execute_script("arguments[0].click();", quarter_option)
+
+
+        except TimeoutException as e:
+            print(f"Error: A UI element took too long to load or could not be found. Details: {e}")
+
+        except Exception as e:
+            print(f"An unexpected error occurred: {e}")
 
     else:
         print(f"One or both fields do not show a validation error layout.(Line: {sys._getframe().f_lineno})")
         return False
-
-
-
-def for_single():
-    select_angular_dropdown("Belongs to PVTG Category", "No")
-    time.sleep(0.5)
-    
-    # Wait for the option list overlay to appear and click "No"
-    select_angular_dropdown("Suspected", "No")
-    
-    # Small pause to let the overlay close cleanly
-    time.sleep(0.5)
-
-    #select_angular_dropdown("गर्भवती / स्तनपान कराने वाली", "No")
-    try:
-        # 1. 3 सेकंड का एक छोटा वेट लगाएँ ताकि चेक किया जा सके कि dropdown स्क्रीन पर मौजूद है या नहीं
-        dropdown_label = "गर्भवती / स्तनपान कराने वाली"
-        select_xpath = f"//mat-select[contains(normalize-space(.), '{dropdown_label}')] | //div[contains(normalize-space(.), '{dropdown_label}')]//mat-select"
-        
-        # यदि element दिखाई देता है, तो इसे variable में स्टोर करें
-        is_visible = WebDriverWait(driver, 5).until( #from 3 to 10
-            EC.presence_of_element_located((By.XPATH, select_xpath))
-        )
-        
-        # 2. केवल element मिलने पर ही फ़ंक्शन को कॉल करें
-        select_angular_dropdown("गर्भवती / स्तनपान कराने वाली", "No")
-        print("गर्भवती / स्तनपान कराने वाली dropdown सफलतापूर्वक सेट कर दिया गया है।")
-
-    except Exception:
-        # अगर element 3 सेकंड में नहीं मिलता, तो script बिना क्रैश हुए इसे छोड़ देगी
-        print("गर्भवती / स्तनपान कराने वाली dropdown स्क्रीन पर दिखाई नहीं दिया। आगे बढ़ रहे हैं...")
-
-    
-    time.sleep(0.5)
-
-    # ----------------------------------------------------
-    # 3. Tick the Consent Checkbox
-    # ----------------------------------------------------
-    # Target the inner invisible input or the mat-checkbox label component
-    # 1. Locate the checkbox element safely using dynamic layout variations
-    checkbox = wait.until(EC.presence_of_element_located((
-        By.XPATH, "//mat-checkbox//input[@type='checkbox'] | //mat-checkbox | //input[@type='checkbox']"
-    )))
-
-    # 2. Scroll to the element to make sure it is in view
-    driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", checkbox)
-
-    # 3. Force the click event via JavaScript to avoid element click intercepted errors
-    driver.execute_script("arguments[0].click();", checkbox)
-
-    # ----------------------------------------------------
-    # 4. Upload a Dummy Picture
-    # ----------------------------------------------------
-    # --- 1. File Upload Phase ---
-    dummy_image_path = os.path.abspath("temp_placeholder.jpg")
-    if not os.path.exists(dummy_image_path):
-        with open(dummy_image_path, "wb") as f:
-            f.write(b"\xFF\xD8\xFF\xE0\x00\x10JFIF\x00\x01\x01\x01\x00`\x00`\x00\x00\xFF\xDB\x00C\x00\x08\x06\x06\x07\x06\x05\x08\x07\x07\x07\t\t\x08\n\x0C\x14\r\x0C\x0B\x0B\x0C\x19\x12\x13\x0F\x14\x1D\x1A\x1F\x1E\x1D\x1A\x1C\x1C $.' \",#\x1C\x1C(7),01444\x1F'9=82<.342\xFF\xC0\x00\x0B\x08\x00\x01\x00\x01\x01\x01\x11\x01\xFF\xC4\x00\x15\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xDA\x00\x0C\x01\x01\x00\x00\x3F\x00\xB2\xC0\xFF\xD9")
-
-    # Target the hidden browser file channel input directly
-    photo_input = driver.find_element(By.XPATH, "//input[@type='file']")
-    photo_input.send_keys(dummy_image_path)
-    print("Placeholder photo successfully routed to file stream.")
-
-    # --- 2. Corrected Synchronization Wait ---
-    # Use the global 'wait' object instance to keep timeout metrics uniform.
-    # This explicitly waits for the image rendering preview frame to appear in the container layout.
-    wait.until(EC.presence_of_element_located((
-        By.XPATH, "//div[contains(@class, 'image')]//img | //img[not(@id) and @src] | //*[contains(@class, 'preview')]"
-    )))
-    print("Form validation refreshed: Photo preview detected.")
-
-    # --- 3. Click Execution ---
-    submit_btn = wait.until(EC.presence_of_element_located((
-        By.XPATH, "//button[contains(normalize-space(.), 'Submit Leprosy Report')]"
-    )))
-    driver.execute_script("arguments[0].click();", submit_btn)
-    print("Form submission executed successfully.")
-
-
-    # 1. Explicitly wait until the SweetAlert confirm button is interactive on the screen viewport
-    yes_save_btn = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, "button.swal2-confirm")))
-    
-    # 2. Execute the click using JavaScript to guarantee execution through the backdrop fade overlay
-    driver.execute_script("arguments[0].click();", yes_save_btn)
-    print("Confirmation modal 'Yes, Save' button successfully clicked.")
-
-
-    try:
-        # 1. Target the button via its unique SweetAlert confirmation class
-        success_ok_btn = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, "button.swal2-confirm")))
-        
-        # 2. Fix: Corrected syntax using arguments[0] to run the native browser click track
-        driver.execute_script("arguments[0].click();", success_ok_btn)
-        print("Success popup 'OK' button clicked via corrected JS call.")
-        
-    except Exception:
-        # Fallback Option: If the overlay layer blocks it, move the real pointer directly to the center and click
-        print("JavaScript click fallback initiated...")
-        success_ok_btn = driver.find_element(By.CSS_SELECTOR, "button.swal2-confirm")
-        ActionChains(driver).move_to_element(success_ok_btn).click().perform()
-        print("Success popup 'OK' button forcefully clicked via Actions API.")    
 
 
 def login():
@@ -325,7 +262,7 @@ def login():
         print(f"Successfully clicked 'Continue'. (line: {sys._getframe().f_lineno})")
 
         # Replace this list with your actual target Ration Card numbers
-        ration_cards = ['226489587274', '226489665424', '226489700178', '226489709765', '226489813931', '226489913534', '226484565907']
+        ration_cards = ['226489709765', '226489813931', '226489913534', '226484565907']
         
         for card_number in ration_cards:
             
@@ -449,6 +386,40 @@ def login():
                                 logging.warning(f"Could not check or update ABHA ID field layout: {e}")  
 
 
+                            try:
+                                # 1. Locate the Age input field using its formcontrolname attribute
+                                age_field = WebDriverWait(driver, 5).until(
+                                    EC.presence_of_element_located((By.CSS_SELECTOR, "input[formcontrolname='age_number']"))
+                                )
+                                age_value_str = age_field.get_attribute("value")
+                                
+                                if age_value_str and age_value_str.isdigit():
+                                    age = int(age_value_str)
+                                    
+                                    # 2. Check if the age meets your condition (60 or above)
+                                    if age >= 60:
+                                        # UPDATED: Using formcontrolname="name" as shown in the DOM snippet
+                                        name_field = driver.find_element(By.CSS_SELECTOR, "input[formcontrolname='name']")
+                                        member_name = name_field.get_attribute("value")
+                                        print(f"[SKIP] Member '{member_name}' with Ration Card '{card_number}' is {age} years old. Moving to next member.")
+                                        # Action: Place your loop's 'continue' or next-member logic here
+                                        # Locate the element context structure explicitly
+                                        specific_clear = WebDriverWait(driver, 2).until(
+                                            EC.presence_of_element_located((By.XPATH, "//div[contains(@class, 'search-row-two')]//button[contains(., 'Clear')]"))
+                                        )
+                                        
+                                        # Execute script-based click to completely avoid Interception / State exceptions
+                                        driver.execute_script("arguments[0].click();", specific_clear)
+                                        print("Clear button successfully triggered via JS execution.")
+
+                                        counter += 1
+                                        continue  # Skip to the next iteration of the outer loop
+
+                            except Exception as e:
+                                print(f"Failed to verify member age criteria: {e}")
+
+
+
                             print(f"screening for {card_number}: {i}")
                             # ----------------------------------------------------
                             # 1. Select "No" in the "Belongs to PVTG Category" Dropdown
@@ -542,23 +513,21 @@ def login():
 
                             # 1. Wait for and capture the SweetAlert2 duplicate container
                             # Now alert_container is actively utilized to locate elements relative to itself!
-                            alert_container = WebDriverWait(driver, 1).until(
+                            alert_container = WebDriverWait(driver, 5).until(
                                 EC.visibility_of_element_located((By.CLASS_NAME, "swal2-container"))
                             )
-                            mySleepFunction(1)
 
                             # 2. Scope the search INSIDE the alert_container for maximum speed and accuracy
                             error_text_element = alert_container.find_element(By.ID, "swal2-html-container")
-                            mySleepFunction(2)
 
                             if "इस वर्ष और तिमाही" in error_text_element.text: # "recorded for this year/quarter"
                                 print(f"Duplicate warning caught: {error_text_element.text}")
                                 
                                 # Target the confirm button inside the container element structure directly
                                 ok_button = alert_container.find_element(By.CSS_SELECTOR, "button.swal2-confirm")
-                                
+
                                 js_force_click_and_close = """
-                                    var btn = arguments[0];
+                                    var btn = arguments[0]; // Fixed: Explicitly target index 0
                                     if (btn) {
                                         btn.focus();
                                         ['mousedown', 'mouseup', 'click'].forEach(function(evtName) {
@@ -574,13 +543,16 @@ def login():
                                                 document.body.classList.remove("swal2-shown", "swal2-height-auto");
                                                 console.log("Forced dynamic cleanup of blocking SweetAlert layers completed.");
                                             }
-                                        }, 300);
+                                        }, 150); // Reduced delay for faster UI convergence
                                     }
                                 """
+
+                                # Execute the corrected script injection pass
                                 driver.execute_script(js_force_click_and_close, ok_button)
-                                
-                                WebDriverWait(driver, 2).until(
-                                    EC.invisibility_of_element_located((By.CLASS_NAME, "swal2-container"))
+
+                                # Robust wait verification using structural staleness instead of just visibility flags
+                                WebDriverWait(driver, 5).until(
+                                    EC.staleness_of(alert_container)
                                 )
                                 
                                 # 4. Trigger form clearing operations safely via JavaScript click
@@ -617,28 +589,6 @@ def login():
                                     EC.invisibility_of_element_located((By.CLASS_NAME, "swal2-container"))
                                 )
                                 check_date_and_village_set()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
                             if i < total_buttons:
