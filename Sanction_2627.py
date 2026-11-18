@@ -304,9 +304,8 @@ def process_beneficiary_card(wait, block_text, gp_text, scheme_text, cat_text):
     total_links = 0
 
     while time.time() < end_time:
-        total_links = driver.execute_script(
-            "return document.querySelectorAll('#tbBeneficiaryBody a.view-details-trigger, a.view-details-trigger').length;"
-        )
+        view_detail_xpath = "//table//a[normalize-space()='View Detail'] | //table//button[normalize-space()='View Detail']"
+        total_links = len(driver.find_elements(By.XPATH, view_detail_xpath))
         if total_links and total_links > 0:
             break
         time.sleep(0.5)
@@ -317,31 +316,43 @@ def process_beneficiary_card(wait, block_text, gp_text, scheme_text, cat_text):
 
     print(f"  Location: {block_text} / {gp_text} | Found {total_links} 'View Detail' links.")
 
+
     for idx in range(total_links):
-        links = driver.find_elements(By.CSS_SELECTOR, "a.view-details-trigger")
-        if idx >= len(links):
-            break
+        row_data = {}
+        clicked = False
 
-        link = links[idx]
+        for attempt in range(2):  # Retry once if the DOM refreshes mid-lookup
+            try:
+                current_links = driver.find_elements(By.XPATH, view_detail_xpath)
+                if idx >= len(current_links):
+                    break
 
-        # Read basic columns from the table row
-        row_data = driver.execute_script("""
-            var tr = arguments[0].closest('tr');
-            if (!tr) return {};
-            var tds = tr.querySelectorAll('td');
-            return {
-                reg_id: tds.length > 2 ? tds[2].innerText.trim() : '',
-                ben_name: tds.length > 3 ? tds[3].innerText.trim() : '',
-                father_name: tds.length > 4 ? tds[4].innerText.trim() : '',
-                status: tds.length > 6 ? tds[6].innerText.trim() : ''
-            };
-        """, link)
+                link = current_links[idx]
 
-        print(f"    [{idx + 1}/{total_links}] Clicking View Detail -> {row_data.get('reg_id')} | {row_data.get('ben_name')}")
+                # Extract row text fresh from the parent row
+                row = link.find_element(By.XPATH, "./ancestor::tr")
+                tds = row.find_elements(By.TAG_NAME, "td")
+                row_data = {
+                    "reg_id": tds[2].text.strip() if len(tds) > 2 else "",
+                    "ben_name": tds[3].text.strip() if len(tds) > 3 else "",
+                    "father_name": tds[4].text.strip() if len(tds) > 4 else "",
+                    "status": tds[6].text.strip() if len(tds) > 6 else "",
+                }
 
-        driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", link)
-        time.sleep(0.3)
-        driver.execute_script("arguments[0].click();", link)
+                print(f"[{idx + 1}/{total_links}] Clicking View Detail -> {row_data['reg_id']} | {row_data['ben_name']}")
+                driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", link)
+                time.sleep(0.3)
+                driver.execute_script("arguments[0].click();", link)
+                clicked = True
+                break  # Success, exit retry loop
+
+            except StaleElementReferenceException:
+                if attempt == 1:
+                    raise
+                time.sleep(0.5)
+
+        if not clicked:
+            continue
 
         # Extract all stage values from the opened modal
         stages_data = extract_detail_modal_stages()
@@ -399,19 +410,24 @@ def process_beneficiary_card(wait, block_text, gp_text, scheme_text, cat_text):
             confirm_btn.click()
         except Exception:
             driver.execute_script("arguments[0].click();", confirm_btn)
+        
         print("Confirm Sanction Order button clicked.")
-
-        # Wait for the 'Done' button inside #sanctionModalFooter and click it
-        done_btn = wait.until(
-            EC.element_to_be_clickable(
-                (By.XPATH, "//div[@id='sanctionModalFooter']//button[normalize-space()='Done']")
-            )
-        )
+        mySleepFunction(1)  # Allow time for the modal to appear
         try:
+            # Wait for the 'Done' button inside #sanctionModalFooter and click it
+            done_btn = wait.until(
+                EC.element_to_be_clickable(
+                    (By.XPATH, "//div[@id='sanctionModalFooter']//button[normalize-space()='Done']")
+                )
+            )
             done_btn.click()
+            print("Done button clicked.")
+            mySleepFunction(3)  # Allow time for the modal to close
         except Exception:
-            driver.execute_script("arguments.click();", done_btn)
-        print("Done button clicked.")
+            #driver.execute_script("arguments.click();", done_btn)
+            print("Due to dummay sanction modal, Done button clicked via JS.")
+
+
 
         # Wait for the sanction modal to finish closing before continuing the loop
         wait.until(EC.invisibility_of_element_located((By.ID, "sanctionModal")))
