@@ -13,6 +13,7 @@ import cv2
 import requests
 import threading
 from selenium.common.exceptions import StaleElementReferenceException, TimeoutException
+from selenium.webdriver.common.keys import Keys
 
 w_FY_type = ["2016-2017", "2017-2018","2018-2019", "2019-2020", "2020-2021", "2022-2023", "2024-2025", "2025-2026"] 
 FY_type = ["2024-2025", "2025-2026", "PMAYG Cumulative progress till date" ]
@@ -363,15 +364,61 @@ def process_beneficiary_card(wait, block_text, gp_text, scheme_text, cat_text):
         save_row_to_csv(record)
         print("      Extracted Stages:", {s: record[s] for s in STAGE_NAMES})
 
-        # Close the opened detail modal (excluding #preferencesModal)
-        open_modals = driver.find_elements(By.CSS_SELECTOR, ".modal.show:not(#preferencesModal)")
-        if open_modals:
-            close_btns = open_modals[0].find_elements(
-                By.CSS_SELECTOR, ".btn-close, button[data-bs-dismiss='modal'], .close"
+        visible_modals = [
+            m for m in driver.find_elements(By.CSS_SELECTOR, ".modal.show:not(#preferencesModal)")
+            if m.is_displayed()
+        ]
+
+        if visible_modals:
+            active_modal = visible_modals[-1]
+            close_btns = active_modal.find_elements(
+                By.CSS_SELECTOR,
+                "button[data-bs-dismiss='modal'], .btn-close"
             )
             if close_btns:
-                driver.execute_script("arguments[0].click();", close_btns[0])
-                wait.until(EC.invisibility_of_element(open_modals[0]))
+                # Target the footer 'Close' button if multiple exist, otherwise the first match
+                target_btn = close_btns[-1]
+                driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", target_btn)
+                try:
+                    target_btn.click()
+                except Exception:
+                    driver.execute_script("arguments[0].click();", target_btn)
+
+            # Wait until the modal no longer has the 'show' class or becomes invisible
+            wait.until(lambda d: "show" not in active_modal.get_attribute("class"))
+
+
+
+    # Locate and click Confirm Sanction Order button
+    confirm_btn = wait.until(EC.presence_of_element_located((By.ID, "confirmSanctionBtn")))
+
+    if confirm_btn.is_enabled():
+        driver.execute_script("arguments.scrollIntoView({block: 'center'});", confirm_btn)
+        try:
+            confirm_btn.click()
+        except Exception:
+            driver.execute_script("arguments.click();", confirm_btn)
+        print("Confirm Sanction Order button clicked.")
+
+        # Wait for the 'Done' button inside #sanctionModalFooter and click it
+        done_btn = wait.until(
+            EC.element_to_be_clickable(
+                (By.XPATH, "//div[@id='sanctionModalFooter']//button[normalize-space()='Done']")
+            )
+        )
+        try:
+            done_btn.click()
+        except Exception:
+            driver.execute_script("arguments.click();", done_btn)
+        print("Done button clicked.")
+
+        # Wait for the sanction modal to finish closing before continuing the loop
+        wait.until(EC.invisibility_of_element_located((By.ID, "sanctionModal")))
+    else:
+        print("Button is currently disabled (inactive).")
+
+
+
 
 def Sanction_2627():
     wait = WebDriverWait(driver, 15)
