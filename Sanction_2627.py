@@ -219,7 +219,7 @@ def find_beneficiary_context():
     return False
 
 CSV_FILE = "Sanction_2627_Stages_Report.csv"
-
+csv_gp_file = "visited_gps.csv"
 STAGE_NAMES = [
     "Geo Tagged",
     "Job Card No. Mapped & Verified",
@@ -393,11 +393,12 @@ def process_beneficiary_card(wait, block_text, gp_text, scheme_text, cat_text):
     confirm_btn = wait.until(EC.presence_of_element_located((By.ID, "confirmSanctionBtn")))
 
     if confirm_btn.is_enabled():
-        driver.execute_script("arguments.scrollIntoView({block: 'center'});", confirm_btn)
+        # Use arguments[0] to reference the first argument passed to execute_script
+        driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", confirm_btn)
         try:
             confirm_btn.click()
         except Exception:
-            driver.execute_script("arguments.click();", confirm_btn)
+            driver.execute_script("arguments[0].click();", confirm_btn)
         print("Confirm Sanction Order button clicked.")
 
         # Wait for the 'Done' button inside #sanctionModalFooter and click it
@@ -417,6 +418,39 @@ def process_beneficiary_card(wait, block_text, gp_text, scheme_text, cat_text):
     else:
         print("Button is currently disabled (inactive).")
 
+def get_visited_gps(csv_path, current_block):
+    """Reads all previously recorded GPs for the given block across all runs."""
+    visited = set()
+    if not os.path.exists(csv_path):
+        return visited
+
+    with open(csv_path, mode="r", newline="", encoding="utf-8-sig") as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            block_name = row.get("Block", "").strip().lower()
+            gp_name = row.get("GP", "").strip().lower()
+            gp_val = row.get("GP_Value", "").strip().lower()
+            if block_name == current_block.strip().lower():
+                if gp_name:
+                    visited.add(gp_name)
+                if gp_val:
+                    visited.add(gp_val)
+    return visited
+
+def append_visited_gp(csv_path, current_block, gp_name, gp_val=""):
+    """Appends a single completed GP to the CSV file immediately."""
+    write_header = not os.path.exists(csv_path) or os.path.getsize(csv_path) == 0
+
+    with open(csv_path, mode="a", newline="", encoding="utf-8-sig") as f:
+        writer = csv.DictWriter(f, fieldnames=["Block", "GP", "GP_Value"])
+        if write_header:
+            writer.writeheader()
+        writer.writerow({
+            "Block": current_block.strip(),
+            "GP": gp_name.strip(),
+            "GP_Value": str(gp_val).strip()
+        })
+        f.flush()  # Forces immediate disk write in case the script stops
 
 
 
@@ -464,9 +498,20 @@ def Sanction_2627():
             continue
 
         gps = get_valid_options(driver.find_element(*gp_locator))
+        # --- Before starting the GP loop for the current block ---
+        visited_gps = get_visited_gps(csv_gp_file, block_text)
 
         # 3. Loop through all Gram Panchayats
         for gp_val, gp_text in gps:
+            gp_text_clean = gp_text.strip().lower()
+            gp_val_clean = str(gp_val).strip().lower()
+
+            # Skip if already recorded in any previous run
+            if gp_text_clean in visited_gps or gp_val_clean in visited_gps:
+                print(f"[SKIP] Already visited GP: {gp_text} (Block: {block_text})")
+                continue
+            append_visited_gp(csv_gp_file, block_text, gp_text, gp_val)  # Record this GP as visited
+
             select_and_trigger_change(wait, gp_locator, gp_val)
 
             try:
