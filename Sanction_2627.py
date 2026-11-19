@@ -299,38 +299,45 @@ def extract_detail_modal_stages():
     return extracted or {}
 
 def process_beneficiary_card(wait, block_text, gp_text, scheme_text, cat_text):
-    """Finds all 'View Detail' links, extracts Stages from each modal, and saves to CSV."""
+    """Finds all rows, extracts Stages from 'View Detail' modals, and saves all rows to CSV."""
+    row_xpath = "//table[not(ancestor::div[contains(@class,'modal')])]//tbody/tr[td]"
     end_time = time.time() + 15
-    total_links = 0
+    rows = []
+    prev_count = -1
 
     while time.time() < end_time:
-        view_detail_xpath = "//table//a[normalize-space()='View Detail'] | //table//button[normalize-space()='View Detail']"
-        total_links = len(driver.find_elements(By.XPATH, view_detail_xpath))
-        if total_links and total_links > 0:
-            break
-        time.sleep(0.5)
+        try:
+            current_rows = [r for r in driver.find_elements(By.XPATH, row_xpath) if r.is_displayed()]
+            curr_count = len(current_rows)
+            if curr_count > 0 and curr_count == prev_count:
+                rows = current_rows
+                break
+            prev_count = curr_count
+        except StaleElementReferenceException:
+            # Table refreshed mid-check; reset counter and retry on next loop
+            prev_count = -1
+        time.sleep(0.8)
 
-    if not total_links:
-        print(f"  [WARN] 0 links found for {gp_text} | {cat_text}")
+    total_rows = len(rows)
+    if total_rows == 0:
+        print(f"  [WARN] 0 rows found for {gp_text} | {cat_text}")
         return
 
-    print(f"  Location: {block_text} / {gp_text} | Found {total_links} 'View Detail' links.")
+    view_detail_xpath = ".//a[normalize-space()='View Detail'] | .//button[normalize-space()='View Detail']"
+    print(f"  Location: {block_text} / {gp_text} | Total visible rows: {total_rows}")
 
-
-    for idx in range(total_links):
+    # 2. Loop through the exact count of visible rows
+    for idx in range(total_rows):
         row_data = {}
         clicked = False
 
-        for attempt in range(2):  # Retry once if the DOM refreshes mid-lookup
+        for attempt in range(2):
             try:
-                current_links = driver.find_elements(By.XPATH, view_detail_xpath)
-                if idx >= len(current_links):
+                current_rows = [r for r in driver.find_elements(By.XPATH, row_xpath) if r.is_displayed()]
+                if idx >= len(current_rows):
                     break
 
-                link = current_links[idx]
-
-                # Extract row text fresh from the parent row
-                row = link.find_element(By.XPATH, "./ancestor::tr")
+                row = current_rows[idx]
                 tds = row.find_elements(By.TAG_NAME, "td")
                 row_data = {
                     "reg_id": tds[2].text.strip() if len(tds) > 2 else "",
@@ -339,25 +346,28 @@ def process_beneficiary_card(wait, block_text, gp_text, scheme_text, cat_text):
                     "status": tds[6].text.strip() if len(tds) > 6 else "",
                 }
 
-                print(f"[{idx + 1}/{total_links}] Clicking View Detail -> {row_data['reg_id']} | {row_data['ben_name']}")
+                row_links = row.find_elements(By.XPATH, view_detail_xpath)
+                if not row_links:
+                    print(f"[{idx + 1}/{total_rows}] Skipping modal (No View Detail) -> {row_data['reg_id']} | {row_data['status']}")
+                    break
+
+                link = row_links[0]
+                print(f"[{idx + 1}/{total_rows}] Clicking View Detail -> {row_data['reg_id']} | {row_data['ben_name']}")
                 driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", link)
                 time.sleep(0.3)
                 driver.execute_script("arguments[0].click();", link)
                 clicked = True
-                break  # Success, exit retry loop
+                break
 
             except StaleElementReferenceException:
                 if attempt == 1:
                     raise
                 time.sleep(0.5)
 
-        if not clicked:
-            continue
+        # Extract modal stages if a link was clicked; otherwise leave stages blank
+        stages_data = extract_detail_modal_stages() if clicked else {}
 
-        # Extract all stage values from the opened modal
-        stages_data = extract_detail_modal_stages()
-
-        # Build complete record and save immediately to CSV
+        # Build complete record and save immediately to CSV (saves both Sanctioned & View Detail rows)
         record = {
             "Block": block_text,
             "Gram Panchayat": gp_text,
@@ -373,30 +383,28 @@ def process_beneficiary_card(wait, block_text, gp_text, scheme_text, cat_text):
             record[stage] = stages_data.get(stage, "")
 
         save_row_to_csv(record)
-        print("      Extracted Stages:", {s: record[s] for s in STAGE_NAMES})
+        if clicked:
+            print("      Extracted Stages:", {s: record[s] for s in STAGE_NAMES})
 
-        visible_modals = [
-            m for m in driver.find_elements(By.CSS_SELECTOR, ".modal.show:not(#preferencesModal)")
-            if m.is_displayed()
-        ]
+            visible_modals = [
+                m for m in driver.find_elements(By.CSS_SELECTOR, ".modal.show:not(#preferencesModal)")
+                if m.is_displayed()
+            ]
+            if visible_modals:
+                active_modal = visible_modals[-1]
+                close_btns = active_modal.find_elements(
+                    By.CSS_SELECTOR,
+                    "button[data-bs-dismiss='modal'], .btn-close"
+                )
+                if close_btns:
+                    target_btn = close_btns[-1]
+                    driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", target_btn)
+                    try:
+                        target_btn.click()
+                    except Exception:
+                        driver.execute_script("arguments[0].click();", target_btn)
 
-        if visible_modals:
-            active_modal = visible_modals[-1]
-            close_btns = active_modal.find_elements(
-                By.CSS_SELECTOR,
-                "button[data-bs-dismiss='modal'], .btn-close"
-            )
-            if close_btns:
-                # Target the footer 'Close' button if multiple exist, otherwise the first match
-                target_btn = close_btns[-1]
-                driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", target_btn)
-                try:
-                    target_btn.click()
-                except Exception:
-                    driver.execute_script("arguments[0].click();", target_btn)
-
-            # Wait until the modal no longer has the 'show' class or becomes invisible
-            wait.until(lambda d: "show" not in active_modal.get_attribute("class"))
+                wait.until(lambda d: "show" not in active_modal.get_attribute("class"))
 
 
 
@@ -426,6 +434,8 @@ def process_beneficiary_card(wait, block_text, gp_text, scheme_text, cat_text):
         except Exception:
             #driver.execute_script("arguments.click();", done_btn)
             print("Due to dummay sanction modal, Done button clicked via JS.")
+            return
+
 
 
 
@@ -503,8 +513,9 @@ def Sanction_2627():
     blocks = get_valid_options(block_el)
     print(f"Total Blocks found: {len(blocks)}")
 
+    #[('3305009','SURAJPUR'),('3305010', 'PREMNAGAR'),('33050011','RAMANUJNAGAR'),('3305012', 'BHAIYATHAN'),('3305013', 'ODAGI'),('3305015', 'PRATAPPUR')
     # 2. Loop through all Blocks
-    for block_val, block_text in blocks:
+    for block_val, block_text in  [('3305009','SURAJPUR')]:
         select_and_trigger_change(wait, block_locator, block_val)
 
         try:
@@ -552,28 +563,27 @@ def Sanction_2627():
 
                 # 5. Loop through all Social Categories
                 for cat_val, cat_text in categories:
-                    old_rows = driver.find_elements(By.XPATH, "//table//tbody/tr")
-
+                     
                     select_and_trigger_change(wait, category_locator, cat_val)
 
+                    # Wait for the new table rows to appear initially
+                    time.sleep(1.5)
 
-                    if old_rows:
-                        try:
-                            wait.until(EC.staleness_of(old_rows[0]))
-                        except TimeoutException:
-                            pass  # In case the table updated in-place without replacing the <tr> node
+                    # ---> INSERT THE SCROLL BLOCK RIGHT HERE <---
+                    # Scroll down to force all lazy-loaded rows in the table to render in the DOM
+                    last_height = driver.execute_script("return document.body.scrollHeight")
+                    while True:
+                        driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+                        time.sleep(0.8)
+                        new_height = driver.execute_script("return document.body.scrollHeight")
+                        if new_height == last_height:
+                            break
+                        last_height = new_height
 
-                    # 4. Wait until the table rows finish rendering and count stabilizes
+                    # Scroll back to the top before counting and clicking
+                    driver.execute_script("window.scrollTo(0, 0);")
                     time.sleep(0.5)
-                    view_detail_xpath = "//table//a[normalize-space()='View Detail'] | //table//button[normalize-space()='View Detail']"
-
-                    # Only count visible 'View Detail' links inside the active table
-                    visible_links = [
-                        el for el in driver.find_elements(By.XPATH, view_detail_xpath)
-                        if el.is_displayed()
-                    ]
-                    total_links = len(visible_links)
-                    print(f"Loaded {total_links} beneficiaries for current category.")
+                    # ---> END OF INSERTED BLOCK <---
 
 
                     print(f"\nApplying -> Block: {block_text} | GP: {gp_text} | Scheme: {scheme_text} | Category: {cat_text}")
