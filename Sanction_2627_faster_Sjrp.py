@@ -348,7 +348,8 @@ def click_confirm_sanction_if_active(driver, popup_timeout=6):
             time.sleep(0.3)
             return True
         except TimeoutException:
-            pass
+            return False  # 'Done' button didn't appear; modal may have closed automatically
+            
 
         # 3. Wait for #sanctionModal to close completely before moving on
         WebDriverWait(driver, 10).until(
