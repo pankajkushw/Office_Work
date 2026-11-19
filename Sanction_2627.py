@@ -14,6 +14,7 @@ import requests
 import threading
 from selenium.common.exceptions import StaleElementReferenceException, TimeoutException
 from selenium.webdriver.common.keys import Keys
+import re
 
 w_FY_type = ["2016-2017", "2017-2018","2018-2019", "2019-2020", "2020-2021", "2022-2023", "2024-2025", "2025-2026"] 
 FY_type = ["2024-2025", "2025-2026", "PMAYG Cumulative progress till date" ]
@@ -299,150 +300,168 @@ def extract_detail_modal_stages():
     return extracted or {}
 
 def process_beneficiary_card(wait, block_text, gp_text, scheme_text, cat_text):
-    """Finds all rows, extracts Stages from 'View Detail' modals, and saves all rows to CSV."""
-    row_xpath = "//table[not(ancestor::div[contains(@class,'modal')])]//tbody/tr[td]"
-    end_time = time.time() + 15
-    rows = []
-    prev_count = -1
-
-    while time.time() < end_time:
+    # 1. Wait for div.target-badge to update and extract the total after '/'
+    expected_total = None
+    end_wait = time.time() + 8
+    while time.time() < end_wait:
         try:
-            current_rows = [r for r in driver.find_elements(By.XPATH, row_xpath) if r.is_displayed()]
-            curr_count = len(current_rows)
-            if curr_count > 0 and curr_count == prev_count:
-                rows = current_rows
-                break
-            prev_count = curr_count
-        except StaleElementReferenceException:
-            # Table refreshed mid-check; reset counter and retry on next loop
-            prev_count = -1
-        time.sleep(0.8)
+            badge_el = driver.find_element(By.CSS_SELECTOR, "div.target-badge")
+            # badge_el.text will be like "Sanction/ Target: 0 /9"
+            match = re.search(r'/\s*(\d+)', badge_el.text)
+            if match:
+                val = int(match.group(1))
+                expected_total = val
+                if val > 0:
+                    break
+        except Exception:
+            pass
+        time.sleep(0.5)
 
-    total_rows = len(rows)
-    if total_rows == 0:
-        print(f"  [WARN] 0 rows found for {gp_text} | {cat_text}")
+    print(f"  Location: {block_text} / {gp_text} | Expected total from header: {expected_total}")
+
+    row_xpath = "//table[not(ancestor::div[contains(@class,'modal')])]//tbody/tr[td]"
+    visible_check = [r for r in driver.find_elements(By.XPATH, row_xpath) if r.is_displayed()]
+
+    if expected_total == 0 and len(visible_check) == 0:
+        print(f"  [INFO] 0 records for {gp_text} | {cat_text}. Moving to next.")
         return
 
+
+
+    row_xpath = "//table[not(ancestor::div[contains(@class,'modal')])]//tbody/tr[td]"
     view_detail_xpath = ".//a[normalize-space()='View Detail'] | .//button[normalize-space()='View Detail']"
-    print(f"  Location: {block_text} / {gp_text} | Total visible rows: {total_rows}")
 
-    # 2. Loop through the exact count of visible rows
-    for idx in range(total_rows):
-        row_data = {}
-        clicked = False
+    seen_reg_ids = set()
+    stale_scroll_attempts = 0
 
-        for attempt in range(2):
+    # 2. Keep processing visible rows and scrolling down until all expected rows are seen
+    while True:
+        if expected_total is not None and len(seen_reg_ids) >= expected_total:
+            break
+
+        try:
+            visible_rows = [r for r in driver.find_elements(By.XPATH, row_xpath) if r.is_displayed()]
+        except StaleElementReferenceException:
+            time.sleep(0.5)
+            continue
+
+        new_row_processed = False
+
+        for idx in range(len(visible_rows)):
             try:
+                # Re-fetch rows each iteration so DOM updates never cause StaleElementReferenceException
                 current_rows = [r for r in driver.find_elements(By.XPATH, row_xpath) if r.is_displayed()]
                 if idx >= len(current_rows):
                     break
 
                 row = current_rows[idx]
                 tds = row.find_elements(By.TAG_NAME, "td")
+                reg_id = tds[1].text.strip() if len(tds) > 1 else ""
+
+                # Skip if we already processed this Reg ID before scrolling
+                if not reg_id or reg_id in seen_reg_ids:
+                    continue
+
+                seen_reg_ids.add(reg_id)
+                new_row_processed = True
+
                 row_data = {
-                    "reg_id": tds[2].text.strip() if len(tds) > 2 else "",
-                    "ben_name": tds[3].text.strip() if len(tds) > 3 else "",
-                    "father_name": tds[4].text.strip() if len(tds) > 4 else "",
-                    "status": tds[6].text.strip() if len(tds) > 6 else "",
+                    "reg_id": reg_id,
+                    "ben_name": tds[2].text.strip() if len(tds) > 2 else "",
+                    "father_name": tds[3].text.strip() if len(tds) > 3 else "",
+                    "status": tds[5].text.strip() if len(tds) > 5 else "",
                 }
 
                 row_links = row.find_elements(By.XPATH, view_detail_xpath)
-                if not row_links:
-                    print(f"[{idx + 1}/{total_rows}] Skipping modal (No View Detail) -> {row_data['reg_id']} | {row_data['status']}")
-                    break
+                clicked = False
 
-                link = row_links[0]
-                print(f"[{idx + 1}/{total_rows}] Clicking View Detail -> {row_data['reg_id']} | {row_data['ben_name']}")
-                driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", link)
-                time.sleep(0.3)
-                driver.execute_script("arguments[0].click();", link)
-                clicked = True
-                break
+                if row_links:
+                    link = row_links[0]
+                    total_label = expected_total if expected_total else "?"
+                    print(f"[{len(seen_reg_ids)}/{total_label}] Clicking View Detail -> {reg_id} | {row_data['ben_name']}")
+                    driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", link)
+                    time.sleep(0.3)
+                    driver.execute_script("arguments[0].click();", link)
+                    clicked = True
+                else:
+                    print(f"[{len(seen_reg_ids)}/{expected_total or '?'}] No View Detail -> {reg_id} | {row_data['status']}")
+
+                # Extract modal stages if clicked
+                stages_data = extract_detail_modal_stages() if clicked else {}
+
+                record = {
+                    "Block": block_text,
+                    "Gram Panchayat": gp_text,
+                    "Scheme": scheme_text,
+                    "Social Category": cat_text,
+                    "Reg ID": row_data["reg_id"],
+                    "Beneficiary Name": row_data["ben_name"],
+                    "Father's Name": row_data["father_name"],
+                    "Village": stages_data.get("Village", ""),
+                    "Overall Status": row_data["status"],
+                }
+                for stage in STAGE_NAMES:
+                    record[stage] = stages_data.get(stage, "")
+
+                save_row_to_csv(record)
+
+                if clicked:
+                    print("      Extracted Stages:", {s: record[s] for s in STAGE_NAMES})
+                    visible_modals = [
+                        m for m in driver.find_elements(By.CSS_SELECTOR, ".modal.show:not(#preferencesModal)")
+                        if m.is_displayed()
+                    ]
+                    if visible_modals:
+                        active_modal = visible_modals[-1]
+                        close_btns = active_modal.find_elements(
+                            By.CSS_SELECTOR, "button[data-bs-dismiss='modal'], .btn-close"
+                        )
+                        if close_btns:
+                            target_btn = close_btns[-1]
+                            driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", target_btn)
+                            time.sleep(0.2)
+                            driver.execute_script("arguments[0].click();", target_btn)
+                        else:
+                            # Fallback: send ESC key if no dismiss button is matched
+                            from selenium.webdriver.common.keys import Keys
+                            driver.find_element(By.TAG_NAME, "body").send_keys(Keys.ESCAPE)
+
+                        # Wait until NO detail modals remain visible in the DOM (and ignore stale references)
+                        def modal_closed(d):
+                            try:
+                                open_modals = [
+                                    m for m in d.find_elements(By.CSS_SELECTOR, ".modal.show:not(#preferencesModal)")
+                                    if m.is_displayed()
+                                ]
+                                return len(open_modals) == 0
+                            except StaleElementReferenceException:
+                                return True
+
+                        wait.until(modal_closed)
+                        time.sleep(0.3)  # Brief pause for Bootstrap backdrop fade-out
+
 
             except StaleElementReferenceException:
-                if attempt == 1:
-                    raise
                 time.sleep(0.5)
+                break  # Re-scan currently visible rows cleanly
 
-        # Extract modal stages if a link was clicked; otherwise leave stages blank
-        stages_data = extract_detail_modal_stages() if clicked else {}
+        # 3. Scroll down to load the next batch of virtualized rows
+        if not new_row_processed:
+            stale_scroll_attempts += 1
+            if stale_scroll_attempts >= 3:
+                break  # Reached the true bottom of the table
+        else:
+            stale_scroll_attempts = 0
 
-        # Build complete record and save immediately to CSV (saves both Sanctioned & View Detail rows)
-        record = {
-            "Block": block_text,
-            "Gram Panchayat": gp_text,
-            "Scheme": scheme_text,
-            "Social Category": cat_text,
-            "Reg ID": row_data.get("reg_id", ""),
-            "Beneficiary Name": row_data.get("ben_name", ""),
-            "Father's Name": row_data.get("father_name", ""),
-            "Village": stages_data.get("Village", ""),
-            "Overall Status": row_data.get("status", ""),
-        }
-        for stage in STAGE_NAMES:
-            record[stage] = stages_data.get(stage, "")
-
-        save_row_to_csv(record)
-        if clicked:
-            print("      Extracted Stages:", {s: record[s] for s in STAGE_NAMES})
-
-            visible_modals = [
-                m for m in driver.find_elements(By.CSS_SELECTOR, ".modal.show:not(#preferencesModal)")
-                if m.is_displayed()
-            ]
-            if visible_modals:
-                active_modal = visible_modals[-1]
-                close_btns = active_modal.find_elements(
-                    By.CSS_SELECTOR,
-                    "button[data-bs-dismiss='modal'], .btn-close"
-                )
-                if close_btns:
-                    target_btn = close_btns[-1]
-                    driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", target_btn)
-                    try:
-                        target_btn.click()
-                    except Exception:
-                        driver.execute_script("arguments[0].click();", target_btn)
-
-                wait.until(lambda d: "show" not in active_modal.get_attribute("class"))
-
-
-
-    # Locate and click Confirm Sanction Order button
-    confirm_btn = wait.until(EC.presence_of_element_located((By.ID, "confirmSanctionBtn")))
-
-    if confirm_btn.is_enabled():
-        # Use arguments[0] to reference the first argument passed to execute_script
-        driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", confirm_btn)
         try:
-            confirm_btn.click()
-        except Exception:
-            driver.execute_script("arguments[0].click();", confirm_btn)
-        
-        print("Confirm Sanction Order button clicked.")
-        mySleepFunction(1)  # Allow time for the modal to appear
-        try:
-            # Wait for the 'Done' button inside #sanctionModalFooter and click it
-            done_btn = wait.until(
-                EC.element_to_be_clickable(
-                    (By.XPATH, "//div[@id='sanctionModalFooter']//button[normalize-space()='Done']")
-                )
-            )
-            done_btn.click()
-            print("Done button clicked.")
-            mySleepFunction(3)  # Allow time for the modal to close
-        except Exception:
-            #driver.execute_script("arguments.click();", done_btn)
-            print("Due to dummay sanction modal, Done button clicked via JS.")
-            return
+            latest_rows = [r for r in driver.find_elements(By.XPATH, row_xpath) if r.is_displayed()]
+            if latest_rows:
+                driver.execute_script("arguments[0].scrollIntoView({block: 'start'});", latest_rows[-1])
+                time.sleep(0.8)
+        except StaleElementReferenceException:
+            time.sleep(0.5)
 
 
-
-
-        # Wait for the sanction modal to finish closing before continuing the loop
-        wait.until(EC.invisibility_of_element_located((By.ID, "sanctionModal")))
-    else:
-        print("Button is currently disabled (inactive).")
 
 def get_visited_gps(csv_path, current_block):
     """Reads all previously recorded GPs for the given block across all runs."""
@@ -570,19 +589,23 @@ def Sanction_2627():
                     time.sleep(1.5)
 
                     # ---> INSERT THE SCROLL BLOCK RIGHT HERE <---
-                    # Scroll down to force all lazy-loaded rows in the table to render in the DOM
-                    last_height = driver.execute_script("return document.body.scrollHeight")
-                    while True:
-                        driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-                        time.sleep(0.8)
-                        new_height = driver.execute_script("return document.body.scrollHeight")
-                        if new_height == last_height:
-                            break
-                        last_height = new_height
+                    # # Scroll down to force all lazy-loaded rows in the table to render in the DOM
+                    # last_height = driver.execute_script("return document.body.scrollHeight")
+                    # while True:
+                    #     driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+                    #     time.sleep(0.8)
+                    #     new_height = driver.execute_script("return document.body.scrollHeight")
+                    #     if new_height == last_height:
+                    #         break
+                    #     last_height = new_height
 
-                    # Scroll back to the top before counting and clicking
-                    driver.execute_script("window.scrollTo(0, 0);")
-                    time.sleep(0.5)
+                    # # Scroll back to the top before counting and clicking
+                    # driver.execute_script("window.scrollTo(0, 0);")
+                    # time.sleep(0.5)
+                    table_container = driver.find_element(By.CSS_SELECTOR, "div.table-responsive")
+                    driver.execute_script("arguments.scrollTop += 400;", table_container)
+                    time.sleep(0.6)
+
                     # ---> END OF INSERTED BLOCK <---
 
 
