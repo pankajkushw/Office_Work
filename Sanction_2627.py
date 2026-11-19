@@ -552,7 +552,29 @@ def Sanction_2627():
 
                 # 5. Loop through all Social Categories
                 for cat_val, cat_text in categories:
+                    old_rows = driver.find_elements(By.XPATH, "//table//tbody/tr")
+
                     select_and_trigger_change(wait, category_locator, cat_val)
+
+
+                    if old_rows:
+                        try:
+                            wait.until(EC.staleness_of(old_rows[0]))
+                        except TimeoutException:
+                            pass  # In case the table updated in-place without replacing the <tr> node
+
+                    # 4. Wait until the table rows finish rendering and count stabilizes
+                    time.sleep(0.5)
+                    view_detail_xpath = "//table//a[normalize-space()='View Detail'] | //table//button[normalize-space()='View Detail']"
+
+                    # Only count visible 'View Detail' links inside the active table
+                    visible_links = [
+                        el for el in driver.find_elements(By.XPATH, view_detail_xpath)
+                        if el.is_displayed()
+                    ]
+                    total_links = len(visible_links)
+                    print(f"Loaded {total_links} beneficiaries for current category.")
+
 
                     print(f"\nApplying -> Block: {block_text} | GP: {gp_text} | Scheme: {scheme_text} | Category: {cat_text}")
 
