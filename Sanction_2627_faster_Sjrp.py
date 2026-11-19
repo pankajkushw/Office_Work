@@ -170,11 +170,34 @@ def get_valid_options(select_element):
     ]
 
 
+# def select_and_trigger_change(wait, locator, value):
+#     """Selects an option by value and forces a JS 'change' event for AJAX listeners."""
+#     el = wait.until(EC.element_to_be_clickable(locator))
+#     Select(el).select_by_value(value)
+#     driver.execute_script("arguments[0].dispatchEvent(new Event('change', { bubbles: true }));", el)
+
+
+
 def select_and_trigger_change(wait, locator, value):
-    """Selects an option by value and forces a JS 'change' event for AJAX listeners."""
-    el = wait.until(EC.element_to_be_clickable(locator))
-    Select(el).select_by_value(value)
-    driver.execute_script("arguments[0].dispatchEvent(new Event('change', { bubbles: true }));", el)
+    el = wait.until(EC.presence_of_element_located(locator))
+    try:
+        Select(el).select_by_value(value)
+    except ElementNotInteractableException:
+        driver.execute_script("""
+            const sel = arguments;
+            sel.value = arguments;
+            sel.dispatchEvent(new Event('input', { bubbles: true }));
+            sel.dispatchEvent(new Event('change', { bubbles: true }));
+        """, el, value)
+
+
+
+
+
+
+
+
+
 
 def wait_for_options_to_populate(wait, by, locator):
     """Waits until a dependent <select> element has more than 1 option loaded."""
@@ -306,65 +329,30 @@ def extract_detail_modal_stages():
     """)
     return extracted or {}
 
-def click_confirm_sanction_if_active(driver, popup_timeout=6):
+def click_confirm_sanction_if_active(driver, popup_timeout=5):
     try:
-        btn = driver.find_element(
-            By.XPATH,
-            "//button[normalize-space()='Confirm Sanction Order']"
-        )
-
-        is_disabled = (
-            not btn.is_enabled()
-            or btn.get_attribute("disabled") is not None
-            or "disabled" in (btn.get_attribute("class") or "").lower()
-            or btn.value_of_css_property("pointer-events") == "none"
-        )
-
-        if is_disabled:
-            print("'Confirm Sanction Order' is disabled. Skipping.")
+        btn = driver.find_element(By.XPATH, "//button[normalize-space()='Confirm Sanction Order']")
+        if not btn.is_enabled() or "disabled" in (btn.get_attribute("class") or "").lower():
+            print("Confirm Sanction Order button is disabled. Skipping.")
             return False
-
-        driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", btn)
-        driver.execute_script("arguments[0].click();", btn)
-        print("Clicked 'Confirm Sanction Order'. Waiting for sanction modal...")
-
-
-        # 2. Wait for the 'Done' button (#btnSanctionDone) inside #sanctionModal; click if it appears, else pass
-        try:
-            done_btn = WebDriverWait(driver, 8).until(
-                EC.element_to_be_clickable((By.CSS_SELECTOR, "#sanctionModal #btnSanctionDone"))
-            )
-            time.sleep(0.3)
-            driver.execute_script("arguments[0].click();", done_btn)
-            print("  Clicked 'Done' button (#btnSanctionDone).")
-
-            # 3. Wait for #sanctionModal to close completely before moving on
-            WebDriverWait(driver, 10).until(
-                lambda d: d.execute_script(
-                    "const m = document.getElementById('sanctionModal');"
-                    "return !m || !m.classList.contains('show');"
+        else:
+            driver.execute_script("arguments[0].click();", btn)
+            print("Clicked 'Confirm Sanction Order'.")
+            # Click 'Done' if it appears; otherwise press ESC to close any dummy/empty modal cleanly
+            try:
+                done_btn = WebDriverWait(driver, popup_timeout).until(
+                    EC.element_to_be_clickable((By.CSS_SELECTOR, "#sanctionModal #btnSanctionDone"))
                 )
-            )
-            time.sleep(0.3)
-            return True
-        except TimeoutException:
-            return False  # 'Done' button didn't appear; modal may have closed automatically
-            
+                driver.execute_script("arguments[0].click();", done_btn)
+                print("  Clicked 'Done'.")
+                return True
+            except TimeoutException:
+                driver.find_element(By.TAG_NAME, "body").send_keys(Keys.ESCAPE)
+                return False
 
-        # 3. Wait for #sanctionModal to close completely before moving on
-        WebDriverWait(driver, 10).until(
-            lambda d: d.execute_script(
-                "const m = document.getElementById('sanctionModal');"
-                "return !m || !m.classList.contains('show');"
-            )
-        )
-        time.sleep(0.3)
-        return True
-
-    except NoSuchElementException:
-        print("'Confirm Sanction Order' button not found.")
+    except (NoSuchElementException, TimeoutException):
         return False
-
+      # Small pause to allow any modal to close
 
 def process_beneficiary_card(wait, block_text, gp_text, scheme_text, cat_text):
     row_xpath = "//table[not(ancestor::div[contains(@class,'modal')])]//tbody/tr[td]"
@@ -530,7 +518,7 @@ def process_beneficiary_card(wait, block_text, gp_text, scheme_text, cat_text):
             }
         """)
         time.sleep(0.35)
-    click_confirm_sanction_if_active(driver)
+    return click_confirm_sanction_if_active(driver)
 
 def get_visited_gps(csv_path, current_block):
     """Reads all previously recorded GPs for the given block across all runs."""
@@ -659,21 +647,21 @@ def Sanction_2627():
 
                     # ---> INSERT THE SCROLL BLOCK RIGHT HERE <---
                     # # Scroll down to force all lazy-loaded rows in the table to render in the DOM
-                    # last_height = driver.execute_script("return document.body.scrollHeight")
-                    # while True:
-                    #     driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-                    #     time.sleep(0.8)
-                    #     new_height = driver.execute_script("return document.body.scrollHeight")
-                    #     if new_height == last_height:
-                    #         break
-                    #     last_height = new_height
+                    last_height = driver.execute_script("return document.body.scrollHeight")
+                    while True:
+                        driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+                        time.sleep(0.8)
+                        new_height = driver.execute_script("return document.body.scrollHeight")
+                        if new_height == last_height:
+                            break
+                        last_height = new_height
 
-                    # # Scroll back to the top before counting and clicking
-                    # driver.execute_script("window.scrollTo(0, 0);")
-                    # time.sleep(0.5)
-                    table_container = driver.find_element(By.CSS_SELECTOR, "div.table-responsive")
-                    driver.execute_script("arguments.scrollTop += 400;", table_container)
-                    time.sleep(0.6)
+                    # Scroll back to the top before counting and clicking
+                    driver.execute_script("window.scrollTo(0, 0);")
+                    time.sleep(0.5)
+                    # table_container = driver.find_element(By.CSS_SELECTOR, "div.table-responsive")
+                    # driver.execute_script("arguments.scrollTop += 400;", table_container)
+                    # time.sleep(0.6)
 
                     # ---> END OF INSERTED BLOCK <---
 
@@ -693,6 +681,7 @@ def Sanction_2627():
 
                     # 6. Extract rows and click all 'View Detail' links inside main.beneficiary-card
                     process_beneficiary_card(wait, block_text, gp_text, scheme_text, cat_text)
+                    mySleepFunction(2)  # Small pause to ensure modal closes before next iteration
 
                     # 7. Re-open #preferencesModal for the next iteration
                     reopen_preferences_modal(wait)
